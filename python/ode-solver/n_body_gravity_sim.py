@@ -6,23 +6,16 @@ from matplotlib import animation
 
 from ode_solver import solve, integrate_heuns
 
-G = 1.0
+G = 0.1
 
 times = np.linspace(0, 2.5, 500)
 
-positions = [
-    [0.0, 0.0],
-    [1.0, 0.0],
-    [-1.5, 1.5]
-]
+N = 30
+np.random.seed(77)
+positions = np.random.random((N, 2)).tolist()
+velocities = np.random.random((N, 2)).tolist()
 
-velocities = [
-    [0.0, 0.0],
-    [0.0, 10.0],
-    [-2.0, -5.0]
-]
-
-masses = [150.0, 1.0, 2.0]
+masses = np.random.random(N).tolist()
 
 
 def to_state(positions_, velocities_):
@@ -57,6 +50,8 @@ def render(solution_):
     ys = solution_[:, 1::4]
 
     fig, ax = pp.subplots(1, 1)
+    pp.xlim(0, 1)
+    pp.ylim(0, 1)
 
     objects = []
     print(xs.shape)

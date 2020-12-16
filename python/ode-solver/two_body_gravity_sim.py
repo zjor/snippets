@@ -4,7 +4,7 @@ from matplotlib import animation
 
 from ode_solver import solve, integrate_heuns
 
-times = np.linspace(0, 2.5, 500)
+times = np.linspace(0, 25, 5000)
 
 initial_state = [
     0.0,  # x1_0
