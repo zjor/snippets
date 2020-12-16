@@ -10,10 +10,10 @@ G = 0.1
 
 times = np.linspace(0, 2.5, 500)
 
-N = 30
-np.random.seed(77)
+N = 50
+np.random.seed(42)
 positions = np.random.random((N, 2)).tolist()
-velocities = np.random.random((N, 2)).tolist()
+velocities = (np.random.random((N, 2)) - 0.5).tolist()
 
 masses = np.random.random(N).tolist()
 
@@ -50,8 +50,8 @@ def render(solution_):
     ys = solution_[:, 1::4]
 
     fig, ax = pp.subplots(1, 1)
-    pp.xlim(0, 1)
-    pp.ylim(0, 1)
+    pp.xlim(-1, 2)
+    pp.ylim(-1, 2)
 
     objects = []
     print(xs.shape)
