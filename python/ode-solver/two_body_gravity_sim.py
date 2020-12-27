@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as pp
 from matplotlib import animation
 
-from ode_solver import solve, integrate_heuns
+from ode_solver import solve, integrate_heuns, integrate_euler, integrate_rk4
+
+G = 1.0
 
 times = np.linspace(0, 25, 5000)
 
@@ -17,18 +19,31 @@ initial_state = [
     10.0  # vy2_0
 ]
 
+masses = [150.0, 1.0]
+
+
+def get_energy(state_, masses_):
+    x = np.array(state_[0::4])
+    y = np.array(state_[1::4])
+    vx = np.array(state_[2::4])
+    vy = np.array(state_[3::4])
+    masses_ = np.array(masses_)
+    k = (vx ** 2 + vy ** 2).dot(masses_) / 2
+    r = np.sqrt((x[0] - x[1]) ** 2 + (y[0] - y[1]) ** 2)
+    u = -G * masses_[0] * masses_[1] / r
+    return k + u
+
 
 def derivatives_gravity_two_bodies(state_, t_, dt_):
-    g = 1.0
-    m1 = 150.0
-    m2 = 1.0
+
+    m1, m2 = masses
 
     x1, y1 = state_[:2]
     vx1, vy1 = state_[2:4]
     x2, y2 = state_[4:6]
     vx2, vy2 = state_[6:]
     dist2 = (x1 - x2) ** 2 + (y1 - y2) ** 2
-    f = g * m1 * m2 / dist2
+    f = G * m1 * m2 / dist2
     dist = np.sqrt(dist2)
     ax1 = f * (x2 - x1) / dist / m1
     ay1 = f * (y2 - y1) / dist / m1
@@ -36,10 +51,12 @@ def derivatives_gravity_two_bodies(state_, t_, dt_):
     ax2 = f * (x1 - x2) / dist / m2
     ay2 = f * (y1 - y2) / dist / m2
 
+    print(get_energy(state_, masses))
+
     return [vx1, vy1, ax1, ay1, vx2, vy2, ax2, ay2]
 
 
-solution = solve(initial_state, times, integrate_heuns, derivatives_gravity_two_bodies)
+solution = solve(initial_state, times, integrate_rk4, derivatives_gravity_two_bodies)
 pp.clf()
 fig, ax = pp.subplots(1, 1)
 
@@ -70,3 +87,5 @@ ani = animation.FuncAnimation(fig, animate,
                               repeat=False, init_func=init)
 
 pp.show()
+
+# get_energy(initial_state, masses_=masses)

@@ -1,15 +1,23 @@
 import numpy as np
 
 
-def integrate_heuns(state_, t_, dt_, derivatives_func):
-    k1 = derivatives_func(state_, t_, dt_)
-    k2 = derivatives_func([v + d * dt_ for v, d in zip(state_, k1)], t_, dt_)
+def integrate_heuns(state_, t_, dt_, dydx_func):
+    k1 = dydx_func(state_, t_, dt_)
+    k2 = dydx_func([v + d * dt_ for v, d in zip(state_, k1)], t_, dt_)
     return [v + (k1_ + k2_) * dt_ / 2 for v, k1_, k2_ in zip(state_, k1, k2)]
 
 
-def integrate_euler(state_, t_, dt_, derivatives_func):
-    k1 = derivatives_func(state_, t_, dt_)
+def integrate_euler(state_, t_, dt_, dydx_func):
+    k1 = dydx_func(state_, t_, dt_)
     return [v + k1_ * dt_ for v, k1_ in zip(state_, k1)]
+
+
+def integrate_rk4(state_, t_, dt_, dydx_func):
+    k1 = dydx_func(state_, t_, dt_)
+    k2 = dydx_func([v + d * dt_ / 2 for v, d in zip(state_, k1)], t_, dt_)
+    k3 = dydx_func([v + d * dt_ / 2 for v, d in zip(state_, k2)], t_, dt_)
+    k4 = dydx_func([v + d * dt_ for v, d in zip(state_, k3)], t_, dt_)
+    return [v + (k1_ + 2 * k2_ + 2 * k3_ + k4_) * dt_ / 6 for v, k1_, k2_, k3_, k4_ in zip(state_, k1, k2, k3, k4)]
 
 
 def derivatives_circle(state_, t_, dt_):
