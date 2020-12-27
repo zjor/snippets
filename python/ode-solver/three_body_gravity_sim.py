@@ -4,25 +4,25 @@ from functools import reduce
 import matplotlib.pyplot as pp
 from matplotlib import animation
 
-from ode_solver import solve, integrate_heuns
+from ode_solver import solve, integrate_rk4
 
 G = 1.0
 
-times = np.linspace(0, 2.5, 500)
+times = np.linspace(0, 3.5, 1000)
 
 positions = [
-    [0.0, 0.0],
+    [-1.0, 0.0],
     [1.0, 0.0],
-    [-1.5, 1.5]
+    [0.0, 10.0]
 ]
 
 velocities = [
-    [0.0, 0.0],
-    [0.0, 10.0],
-    [-2.0, -5.0]
+    [0.0, -4.0],
+    [0.0, 4.0],
+    [0.0, 0.0]
 ]
 
-masses = [150.0, 1.0, 2.0]
+masses = [50, 50, 1.0]
 
 
 def to_state(positions_, velocities_):
@@ -82,5 +82,5 @@ def render(solution_):
     pp.show()
 
 
-solution = solve(to_state(positions, velocities), times, integrate_heuns, derivatives_gravity_n_bodies)
+solution = solve(to_state(positions, velocities), times, integrate_rk4, derivatives_gravity_n_bodies)
 render(solution)

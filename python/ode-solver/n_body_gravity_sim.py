@@ -4,13 +4,13 @@ from functools import reduce
 import matplotlib.pyplot as pp
 from matplotlib import animation
 
-from ode_solver import solve, integrate_heuns
+from ode_solver import solve, integrate_rk4
 
 G = 0.1
 
-times = np.linspace(0, 2.5, 500)
+times = np.linspace(0, 1.5, 500)
 
-N = 50
+N = 25
 np.random.seed(42)
 positions = np.random.random((N, 2)).tolist()
 velocities = (np.random.random((N, 2)) - 0.5).tolist()
@@ -77,5 +77,5 @@ def render(solution_):
     pp.show()
 
 
-solution = solve(to_state(positions, velocities), times, integrate_heuns, derivatives_gravity_n_bodies)
+solution = solve(to_state(positions, velocities), times, integrate_rk4, derivatives_gravity_n_bodies)
 render(solution)
