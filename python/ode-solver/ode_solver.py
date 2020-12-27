@@ -13,6 +13,14 @@ def integrate_euler(state_, t_, dt_, dydx_func):
 
 
 def integrate_rk4(state_, t_, dt_, dydx_func):
+    """
+    Source: https://www.geeksforgeeks.org/runge-kutta-4th-order-method-solve-differential-equation/
+    :param state_:
+    :param t_:
+    :param dt_:
+    :param dydx_func:
+    :return:
+    """
     k1 = dydx_func(state_, t_, dt_)
     k2 = dydx_func([v + d * dt_ / 2 for v, d in zip(state_, k1)], t_, dt_)
     k3 = dydx_func([v + d * dt_ / 2 for v, d in zip(state_, k2)], t_, dt_)
