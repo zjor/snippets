@@ -21,7 +21,7 @@ def to_state(positions_, velocities_):
     return list(reduce(lambda x, y: x + y, map(lambda x: x[0] + x[1], zip(positions_, velocities_)), []))
 
 
-def derivatives_gravity_n_bodies(state_, t_, dt_):
+def derivatives_gravity_n_bodies(state_, step, t_, dt_):
     xs = state_[::4]
     ys = state_[1::4]
     vxs = state_[2::4]

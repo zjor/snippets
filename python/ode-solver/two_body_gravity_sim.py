@@ -34,7 +34,7 @@ def get_energy(state_, masses_):
     return k + u
 
 
-def derivatives_gravity_two_bodies(state_, t_, dt_):
+def derivatives_gravity_two_bodies(state_, step, t_, dt_):
     m1, m2 = masses
 
     x1, y1 = state_[:2]
