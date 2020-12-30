@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from functools import reduce
 import matplotlib.pyplot as pp
@@ -8,10 +7,10 @@ from ode_solver import solve, integrate_rk4
 
 G = 0.1
 
-times = np.linspace(0, 1.5, 500)
-
 N = 25
 np.random.seed(42)
+
+times = np.linspace(0, 1.5, 500)
 positions = np.random.random((N, 2)).tolist()
 velocities = (np.random.random((N, 2)) - 0.5).tolist()
 
