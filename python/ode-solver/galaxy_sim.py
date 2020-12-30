@@ -34,7 +34,7 @@ def derivatives_gravity_n_bodies(state_, t_, dt_):
             if i == j:
                 continue
             dist2 = (xs[i] - xs[j]) ** 2 + (ys[i] - ys[j]) ** 2
-            a = G * masses[j] / dist2
+            a = G * masses[i] * masses[j] / dist2
             dist = np.sqrt(dist2)
             axs[i] += a * (xs[j] - xs[i]) / dist
             ays[i] += a * (ys[j] - ys[i]) / dist

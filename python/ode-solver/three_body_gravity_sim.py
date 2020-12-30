@@ -6,9 +6,9 @@ from matplotlib import animation
 
 from ode_solver import solve, integrate_rk4
 
-G = 1.0
+G = 0.5
 
-times = np.linspace(0, 3.5, 1000)
+times = np.linspace(0, 2.5, 1000)
 
 positions = [
     [-1.0, 0.0],
@@ -17,12 +17,12 @@ positions = [
 ]
 
 velocities = [
-    [0.0, -4.0],
-    [0.0, 4.0],
+    [0.0, -15.0],
+    [0.0, 15.0],
     [0.0, 0.0]
 ]
 
-masses = [50, 50, 1.0]
+masses = [50, 50, 4.0]
 
 
 def to_state(positions_, velocities_):
@@ -42,7 +42,7 @@ def derivatives_gravity_n_bodies(state_, t_, dt_):
             if i == j:
                 continue
             dist2 = (xs[i] - xs[j]) ** 2 + (ys[i] - ys[j]) ** 2
-            a = G * masses[j] / dist2
+            a = G * masses[i] * masses[j] / dist2
             dist = np.sqrt(dist2)
             axs[i] += a * (xs[j] - xs[i]) / dist
             ays[i] += a * (ys[j] - ys[i]) / dist

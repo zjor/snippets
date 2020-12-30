@@ -35,7 +35,6 @@ def get_energy(state_, masses_):
 
 
 def derivatives_gravity_two_bodies(state_, t_, dt_):
-
     m1, m2 = masses
 
     x1, y1 = state_[:2]
@@ -50,8 +49,6 @@ def derivatives_gravity_two_bodies(state_, t_, dt_):
 
     ax2 = f * (x1 - x2) / dist / m2
     ay2 = f * (y1 - y2) / dist / m2
-
-    print(get_energy(state_, masses))
 
     return [vx1, vy1, ax1, ay1, vx2, vy2, ax2, ay2]
 
@@ -87,5 +84,3 @@ ani = animation.FuncAnimation(fig, animate,
                               repeat=False, init_func=init)
 
 pp.show()
-
-# get_energy(initial_state, masses_=masses)
