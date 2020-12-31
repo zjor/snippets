@@ -1,19 +1,39 @@
 import numpy as np
 
 
+def integrate_euler(state, step, t, dt, dydx_func):
+    """
+    First-order solver. Uses Euler's method
+    :param state:
+    :param step:
+    :param t:
+    :param dt:
+    :param dydx_func:
+    :return:
+    """
+    k1 = dydx_func(state, step, t, dt)
+    return [v + k1_ * dt for v, k1_ in zip(state, k1)]
+
+
 def integrate_heuns(state, step, t, dt, dydx_func):
+    """
+    Second-order Heun's method.
+    Source: https://en.wikipedia.org/wiki/Heun%27s_method
+    :param state:
+    :param step:
+    :param t:
+    :param dt:
+    :param dydx_func:
+    :return:
+    """
     k1 = dydx_func(state, step, t, dt)
     k2 = dydx_func([v + d * dt for v, d in zip(state, k1)], step, t, dt)
     return [v + (k1_ + k2_) * dt / 2 for v, k1_, k2_ in zip(state, k1, k2)]
 
 
-def integrate_euler(state, step, t, dt, dydx_func):
-    k1 = dydx_func(state, step, t, dt)
-    return [v + k1_ * dt for v, k1_ in zip(state, k1)]
-
-
 def integrate_rk4(state, step, t, dt, dydx_func):
     """
+    Fourth-order Runge-Kutta method.
     Source: https://www.geeksforgeeks.org/runge-kutta-4th-order-method-solve-differential-equation/
     :param step:
     :param state:
@@ -35,8 +55,16 @@ def derivatives_circle(state, step, t, dt):
 
 
 def solve(initial_state, times, integrate_func, derivative_func):
+    """
+    Solves the initial-value problem of the first order ODEs
+    :param initial_state: initial state
+    :param times: a sequence of time points for which to solve
+    :param integrate_func: calculates the next state
+    :param derivative_func: computes derivatives of each state component
+    :return:
+    """
     dt = times[1] - times[0]
-    states_ = [initial_state]
+    states = [initial_state]
     for step, t in enumerate(times):
-        states_.append(integrate_func(states_[-1], step, t, dt, derivative_func))
-    return np.array(states_)
+        states.append(integrate_func(states[-1], step, t, dt, derivative_func))
+    return np.array(states)
