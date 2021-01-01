@@ -1,4 +1,3 @@
-import sys
 import numpy as np
 from functools import reduce
 import matplotlib.pyplot as pp
@@ -101,7 +100,7 @@ def render(solution_):
         return objects
 
     ani = animation.FuncAnimation(fig, animate,
-                                  frames=np.arange(1, len(solution)),
+                                  frames=np.arange(1, len(solution_)),
                                   interval=10, blit=True,
                                   repeat=False)
 
