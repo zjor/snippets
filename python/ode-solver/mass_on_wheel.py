@@ -63,9 +63,10 @@ if __name__ == "__main__":
 
     plt.show()
 
-    print(__file__)
 
-    # # Set up formatting for the movie files
-    # Writer = animation.writers['ffmpeg']
-    # writer = Writer(fps=15, metadata=dict(artist='Sergey Royz'), bitrate=1800)
-    # ani.save('free-cart.mp4', writer=writer)
+    # Set up formatting for the movie files
+    print("Writing video...")
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=15, metadata=dict(artist='Sergey Royz'), bitrate=1800)
+    ani.save(f"{__file__[:-3]}.mp4", writer=writer)
+    print("Done")
