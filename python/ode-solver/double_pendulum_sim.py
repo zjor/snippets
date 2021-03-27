@@ -83,5 +83,4 @@ def animate(i):
 
 ani = animation.FuncAnimation(fig, animate, np.arange(1, len(solution)),
                               interval=25, blit=True, init_func=init)
-
 pp.show()
