@@ -1,9 +1,15 @@
+# TODO:
+#  - add def func(current_frame: int, total_frames: int) -> Any
+#  - add friction support
+#  - add controller
+#  - sim asymmetric load
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
 from numpy import sin, cos, pi
-from ode_solver import solve, integrate_rk4
+from ode_solver.ode_solver import solve, integrate_rk4
 
 r = 0.25
 l = 1.0
@@ -68,4 +74,3 @@ if __name__ == "__main__":
     plt.show()
 
     # ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24)
-    # TODO: add def func(current_frame: int, total_frames: int) -> Any
