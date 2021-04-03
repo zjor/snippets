@@ -1,15 +1,9 @@
-# TODO:
-#  - add def func(current_frame: int, total_frames: int) -> Any
-#  - add friction support
-#  - add controller
-#  - sim asymmetric load
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
 from numpy import sin, cos, pi
-from ode_solver import solve, integrate_rk4
+from ode_solver.ode_solver import solve, integrate_rk4
 
 r = 0.25
 l = 1.0
@@ -17,14 +11,23 @@ M = 0.25
 m = 0.3
 g = 9.8
 
+# Friction coefficient due to rotation of the body
+b1 = 0.1
+
+# Friction coefficient due to rotation of the wheel
+b2 = 0.05
+
 I = 0.5 * M * r
 
 
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    _dphi = (m * l * r * dth ** 2 * sin(th) - m * g * r * sin(th) * cos(th)) / (m * r ** 2 * sin(th) ** 2 + I)
-    _dth = (g * sin(th) - r * _dphi * cos(th)) / l
+    s = sin(th)
+    c = cos(th)
+
+    _dphi = (m * r * (l * dth ** 2 * s + b1 * dth * c - g * s * c) - b2 * dphi) / (I + m * r ** 2 * s ** 2)
+    _dth = (g * s - r * _dphi * c - b1 * dth) / l
 
     return [_dth, dth, _dphi, dphi]
 
