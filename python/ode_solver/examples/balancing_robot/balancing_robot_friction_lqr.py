@@ -20,11 +20,20 @@ b2 = 0.05
 I = 0.5 * M * r
 
 
+def get_ref(t):
+    if t < 3.0:
+        return np.array([[0, 0, 0, 0]])
+    else:
+        x = 0.5
+        return np.array([[0, 0, x / r, 0]])
+
+
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    K = np.array([[-13.60196837,  -4.10458492,  -1.,          -0.8067546 ]])
-    u = (-K @ np.array([[th, dth, phi, dphi]]).T)[0, 0]
+    K = np.array([[-36.56342538, -11.44648525,  -3.16227766,  -2.41478209]])
+    _state = np.array([[th, dth, phi, dphi]])
+    u = (-K @ (_state - get_ref(t)).T)[0, 0]
 
     s = sin(th)
     c = cos(th)
@@ -36,7 +45,8 @@ def derivate(state, step, t, dt):
 
 
 if __name__ == "__main__":
-    times = np.linspace(0, 10, 500)
+    times = np.linspace(0, 5.0, 500)
+    dt = times[1] - times[0]
     solution = solve([0.0, pi / 12, .0, .0], times, integrate_rk4, derivate)
     theta = solution[:, 1]
     phi = solution[:, 3]

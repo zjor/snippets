@@ -36,7 +36,7 @@ Q = np.array([
     [.0, .0, .0, 1.]
 ])
 
-R = np.array([[100.]])
+R = np.array([[10.]])
 
 K, S, E = lqr(A, B.T, Q, R)
 
