@@ -9,3 +9,6 @@
 
 2. Fall with friction
 `python -m ode_solver.examples.balancing_robot.balancing_robot_friction_fall`
+
+3. Stabilize with LQR
+`python -m ode_solver.examples.balancing_robot.balancing_robot_friction_lqr`
