@@ -2,3 +2,4 @@ numpy==1.19.4
 scipy==1.5.3
 control==0.9.0
 slycot==0.4.0
+tqdm==4.47.0

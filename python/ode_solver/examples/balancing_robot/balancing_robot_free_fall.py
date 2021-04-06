@@ -1,7 +1,8 @@
 # TODO:
-#  - add def func(current_frame: int, total_frames: int) -> Any
-#  - add friction support
-#  - add controller
+#  - PID regulator
+#  - control with wheel velocity but not torque
+#  - add external noise function
+#  - add motor model
 #  - sim asymmetric load
 
 import numpy as np

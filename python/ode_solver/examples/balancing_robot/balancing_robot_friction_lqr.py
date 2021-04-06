@@ -4,6 +4,7 @@ from matplotlib import animation
 
 from numpy import sin, cos, pi
 from ode_solver.ode_solver import solve, integrate_rk4
+from ode_solver.examples.balancing_robot.lqr import get_a_b, get_lqr_gains
 
 r = 0.25
 l = 1.0
@@ -12,17 +13,26 @@ m = 0.3
 g = 9.8
 
 # Friction coefficient due to rotation of the body
-b1 = 0.1
+b1 = 0.01
 
 # Friction coefficient due to rotation of the wheel
-b2 = 0.05
+b2 = 0.01
 
 I = 0.5 * M * r
+A, B = get_a_b(r, l, M, m, g)
+Q = np.array([
+    [1., .0, .0, .0],
+    [.0, 1., .0, .0],
+    [.0, .0, 100., .0],
+    [.0, .0, .0, 1.]
+])
+R = np.array([[10.]])
+K = get_lqr_gains(A, B, Q, R)
 
 
 def get_ref(t):
     if t < 3.0:
-        return np.array([[0, 0, 0, 0]])
+        return np.array([[0, 0, t, 0]])
     else:
         x = 0.5
         return np.array([[0, 0, x / r, 0]])
@@ -31,7 +41,6 @@ def get_ref(t):
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    K = np.array([[-36.56342538, -11.44648525,  -3.16227766,  -2.41478209]])
     _state = np.array([[th, dth, phi, dphi]])
     u = (-K @ (_state - get_ref(t)).T)[0, 0]
 
@@ -45,6 +54,8 @@ def derivate(state, step, t, dt):
 
 
 if __name__ == "__main__":
+    from tqdm import tqdm
+
     times = np.linspace(0, 5.0, 500)
     dt = times[1] - times[0]
     solution = solve([0.0, pi / 12, .0, .0], times, integrate_rk4, derivate)
@@ -89,4 +100,12 @@ if __name__ == "__main__":
 
     plt.show()
 
-    # ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24)
+    pbar = tqdm(total=len(times))
+
+
+    def animation_save_progress(current_frame: int, total_frames: int):
+        pbar.update(current_frame)
+
+
+    ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24, progress_callback=animation_save_progress)
+    pbar.close()
