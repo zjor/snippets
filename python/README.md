@@ -12,3 +12,6 @@
 
 3. Stabilize with LQR
 `python -m ode_solver.examples.balancing_robot.balancing_robot_friction_lqr`
+
+4. Stabilize with PID
+`python -m ode_solver.examples.balancing_robot.balancing_robot_friction_pid`
