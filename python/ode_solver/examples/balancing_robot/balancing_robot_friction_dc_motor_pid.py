@@ -1,16 +1,12 @@
-# TODO:
-#  - control with wheel velocity but not torque
-#  - add external noise function
-#  - add motor model
-#  - sim asymmetric load
-#  - render animation with PyGame
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
 from numpy import sin, cos, pi
 from ode_solver.ode_solver import solve, integrate_rk4
+from ode_solver.pid_controller import PIDController
+
+from ode_solver.examples.dc_motor.dc_motor import DCMotor
 
 r = 0.25
 l = 1.0
@@ -18,20 +14,48 @@ M = 0.25
 m = 0.3
 g = 9.8
 
+# Friction coefficient due to rotation of the body
+b1 = 0.01
+
+# Friction coefficient due to rotation of the wheel
+b2 = 0.01
+
 I = 0.5 * M * r
+
+phi_pid = PIDController(k_p=-5.0, k_d=0.0, k_i=0.0, target=0.0)
+th_pid = PIDController(k_p=-100.0, k_d=-5.0, k_i=0.0, target=0.0)
+
+
+def get_ref(t):
+    if t < 3.0:
+        return np.array([[0, 0, t, 0]])
+    else:
+        x = 0.5
+        return np.array([[0, 0, x / r, 0]])
 
 
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    _dphi = (m * l * r * dth ** 2 * sin(th) - m * g * r * sin(th) * cos(th)) / (m * r ** 2 * sin(th) ** 2 + I)
-    _dth = (g * sin(th) - r * _dphi * cos(th)) / l
+    phi_u = phi_pid.get_control(phi, dt)
+    th_u = th_pid.get_control(th, dt)
+
+    u = phi_u + th_u
+
+    s = sin(th)
+    c = cos(th)
+
+    _dphi = (m * r * (l * dth ** 2 * s + b1 * dth * c - g * s * c) - b2 * dphi + u) / (I + m * r ** 2 * s ** 2)
+    _dth = (g * s - r * _dphi * c - b1 * dth) / l
 
     return [_dth, dth, _dphi, dphi]
 
 
 if __name__ == "__main__":
-    times = np.linspace(0, 10, 500)
+    from tqdm import tqdm
+
+    times = np.linspace(0, 5.0, 500)
+    dt = times[1] - times[0]
     solution = solve([0.0, pi / 12, .0, .0], times, integrate_rk4, derivate)
     theta = solution[:, 1]
     phi = solution[:, 3]
@@ -74,4 +98,12 @@ if __name__ == "__main__":
 
     plt.show()
 
-    # ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24)
+    # pbar = tqdm(total=len(times))
+    #
+    #
+    # def animation_save_progress(current_frame: int, total_frames: int):
+    #     pbar.update(current_frame)
+    #
+    #
+    # ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24, progress_callback=animation_save_progress)
+    # pbar.close()
