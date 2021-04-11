@@ -34,8 +34,8 @@ class DCMotor:
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
-    from ode_solver import solve, integrate_rk4
-    from pid_controller import PIDController
+    from ode_solver.ode_solver import solve, integrate_rk4
+    from ode_solver.pid_controller import PIDController
 
     times = np.linspace(0, 3.0, 1000)
     dc = DCMotor()

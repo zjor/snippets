@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as pp
 from matplotlib import animation
 
-from ode_solver import solve, integrate_heuns, integrate_euler, integrate_rk4
+from ode_solver.ode_solver import solve, integrate_rk4
 
 G = 1.0
 

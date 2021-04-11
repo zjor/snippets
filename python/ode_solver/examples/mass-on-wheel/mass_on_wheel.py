@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 
 from numpy import sin, cos, pi
-from ode_solver import solve, integrate_rk4
+from ode_solver.ode_solver import solve, integrate_rk4
 
 r = 1.0
 R = 1.5
