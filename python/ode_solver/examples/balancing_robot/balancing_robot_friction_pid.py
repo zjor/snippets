@@ -20,8 +20,20 @@ b2 = 0.01
 
 I = 0.5 * M * r
 
-phi_pid = PIDController(k_p=-5.0, k_d=0.0, k_i=0.0, target=0.0)
-th_pid = PIDController(k_p=-100.0, k_d=-5.0, k_i=0.0, target=0.0)
+th_pid = PIDController(k_p=10.0, k_d=2.5, k_i=0.0, target=0.0)
+
+velocity_pid = PIDController(k_p=0.002, k_d=0.0, k_i=0.001, target=0.0)
+
+u_history = []
+
+
+def limit(v, lim):
+    if v > lim:
+        return lim
+    elif v < -lim:
+        return -lim
+    else:
+        return v
 
 
 def get_ref(t):
@@ -35,10 +47,11 @@ def get_ref(t):
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    phi_u = phi_pid.get_control(phi, dt)
-    th_u = th_pid.get_control(th, dt)
-
-    u = phi_u + th_u
+    th_target = velocity_pid.get_control(dphi, dt)
+    th_pid.set_target(th_target)
+    u = -th_pid.get_control(th, dt)
+    u = limit(u, 10)
+    u_history.append(u)
 
     s = sin(th)
     c = cos(th)
@@ -54,7 +67,7 @@ if __name__ == "__main__":
 
     times = np.linspace(0, 5.0, 500)
     dt = times[1] - times[0]
-    solution = solve([0.0, pi / 12, .0, .0], times, integrate_rk4, derivate)
+    solution = solve([0.0, pi / 18, .0, .0], times, integrate_rk4, derivate)
     theta = solution[:, 1]
     phi = solution[:, 3]
 
@@ -94,6 +107,9 @@ if __name__ == "__main__":
     ani = animation.FuncAnimation(fig, animate, np.arange(1, len(solution)),
                                   interval=25, blit=True, init_func=init)
 
+    plt.show()
+
+    plt.plot(times, u_history[::4])
     plt.show()
 
     # pbar = tqdm(total=len(times))
