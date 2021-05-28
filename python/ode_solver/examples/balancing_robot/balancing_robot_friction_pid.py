@@ -20,6 +20,11 @@ b2 = 0.01
 
 I = 0.5 * M * r
 
+# Measurement distortion
+# - low-pass filter
+# - delay
+# - discrete measurement
+
 th_pid = PIDController(k_p=10.0, k_d=2.5, k_i=0.0, target=0.0)
 
 velocity_pid = PIDController(k_p=0.002, k_d=0.0, k_i=0.001, target=0.0)
@@ -44,12 +49,56 @@ def get_ref(t):
         return np.array([[0, 0, x / r, 0]])
 
 
+def low_pass_filter(alpha, init):
+    y = init
+
+    def _inner(x):
+        nonlocal y
+        y = alpha * x + (1 - alpha) * y
+        return y
+
+    return _inner
+
+
+def time_delay(n):
+    buf = [0] * n
+
+    def _inner(x):
+        nonlocal buf
+        val = buf[0]
+        buf = buf[1:] + [x]
+        return val
+
+    return _inner
+
+
+def discrete_value(n):
+    y = 0
+    i = n
+
+    def _inner(x):
+        nonlocal y, i
+        i -= 1
+        if i == 0:
+            y = x
+            i = n
+        return y
+
+    return _inner
+
+
+filtered_measurement = low_pass_filter(1.0, 0.0)
+delayed_measurement = time_delay(25)
+discrete_measurement = discrete_value(25)
+
+
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    th_target = velocity_pid.get_control(dphi, dt)
-    th_pid.set_target(th_target)
-    u = -th_pid.get_control(th, dt)
+    # th_target = velocity_pid.get_control(dphi, dt)
+    # th_pid.set_target(th_target)
+    measured_th = discrete_measurement(th)
+    u = -th_pid.get_control(measured_th, dt)
     u = limit(u, 10)
     u_history.append(u)
 
