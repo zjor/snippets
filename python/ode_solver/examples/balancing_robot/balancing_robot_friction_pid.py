@@ -25,9 +25,11 @@ I = 0.5 * M * r
 # - delay
 # - discrete measurement
 
-th_pid = PIDController(k_p=10.0, k_d=2.5, k_i=0.0, target=0.0)
+th_pid = PIDController(k_p=40.0, k_d=20.0, k_i=0.0, target=0.0)
 
-velocity_pid = PIDController(k_p=0.002, k_d=0.0, k_i=0.001, target=0.0)
+velocity_pid = PIDController(k_p=0.02, k_d=0.0, k_i=0.0, target=-1.0)
+
+position_pid = PIDController(k_p=0.07, k_d=0.07, k_i=0.0, target=0.0)
 
 u_history = []
 
@@ -95,11 +97,17 @@ discrete_measurement = discrete_value(25)
 def derivate(state, step, t, dt):
     dth, th, dphi, phi = state
 
-    # th_target = velocity_pid.get_control(dphi, dt)
-    # th_pid.set_target(th_target)
-    measured_th = discrete_measurement(th)
+    # velocity_target = position_pid.get_control(phi, dt)
+    # velocity_pid.set_target(velocity_target)
+    #
+    th_target = velocity_pid.get_control(dphi, dt)
+    th_pid.set_target(th_target)
+    # th_pid.set_target(velocity_target)
+
+    # measured_th = discrete_measurement(th)
+    measured_th = th
     u = -th_pid.get_control(measured_th, dt)
-    u = limit(u, 10)
+    u = limit(u, 20)
     u_history.append(u)
 
     s = sin(th)
@@ -114,7 +122,7 @@ def derivate(state, step, t, dt):
 if __name__ == "__main__":
     from tqdm import tqdm
 
-    times = np.linspace(0, 5.0, 500)
+    times = np.linspace(0, 10.0, 1000)
     dt = times[1] - times[0]
     solution = solve([0.0, pi / 18, .0, .0], times, integrate_rk4, derivate)
     theta = solution[:, 1]

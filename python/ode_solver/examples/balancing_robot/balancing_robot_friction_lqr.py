@@ -107,5 +107,5 @@ if __name__ == "__main__":
         pbar.update(current_frame)
 
 
-    ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24, progress_callback=animation_save_progress)
+    # ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24, progress_callback=animation_save_progress)
     pbar.close()
