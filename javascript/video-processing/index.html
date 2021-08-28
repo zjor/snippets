@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Edge Detector</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
 <canvas id="canvas" width="500px" height="500px"></canvas>
@@ -14,7 +16,7 @@
         const ctx = canvas.getContext('2d');
 
         const constraints = {
-            video: {width: 250, height: 200},
+            video: {width: 250, height: 200, facingMode: 'environment'},
         };
         navigator.mediaDevices.getUserMedia(constraints).then(stream => {
             video.srcObject = stream;
