@@ -16,7 +16,7 @@
         const ctx = canvas.getContext('2d');
 
         const constraints = {
-            video: {width: 250, height: 200, facingMode: 'environment'},
+            video: {width: 320, height: 500, facingMode: 'environment'},
         };
         navigator.mediaDevices.getUserMedia(constraints).then(stream => {
             video.srcObject = stream;
