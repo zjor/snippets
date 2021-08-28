@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<canvas id="canvas" width="500px" height="500px"></canvas>
+<video autoplay style="display: none"></video>
+<script>
+    const hasMediaDevices = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    if (hasMediaDevices()) {
+
+        const video = document.querySelector('video');
+        const canvas = document.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const constraints = {
+            video: {width: 250, height: 200},
+        };
+        navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+            video.srcObject = stream;
+
+            setInterval(() => {
+                const w = video.videoWidth;
+                const h = video.videoHeight;
+
+                ctx.drawImage(video, 0, 0, w, h);
+                ctx.putImageData(processImage(ctx.getImageData(0, 0, w, h), w), 0, 0);
+            }, 40);
+
+        });
+
+    } else {
+        alert('getUserMedia() is not supported');
+    }
+
+    const grayscale = (pixels, valueProcessor) => {
+        for (let i = 0; i < pixels.data.length; i += 4) {
+            const [r, g, b] = [pixels.data[i], pixels.data[i + 1], pixels.data[i + 2]];
+            let value = 0.299 * r + 0.587 * g + 0.114 * b;
+            if (valueProcessor) {
+                value = valueProcessor(value);
+            }
+            pixels.data[i] = value;
+            pixels.data[i + 1] = value;
+            pixels.data[i + 2] = value;
+        }
+        return pixels;
+    }
+
+    const threshold = (t, v, is_lower) => {
+        return (pixel) => {
+            if (is_lower) {
+                return (pixel < t) ? v : pixel;
+            } else {
+                return (pixel > t) ? v : pixel;
+            }
+        }
+    }
+
+    const EDGE_DETECTION_KERNEL = [
+        [0, -1, 0],
+        [-1, 4, -1],
+        [0, -1, 0]];
+
+    const EDGE_DETECTION_KERNEL_2 = [
+        [-1, -1, -1],
+        [-1, 8, -1],
+        [-1, -1, -1]];
+
+
+    const applyKernel = (pixels, kernel, imageWidth) => {
+        for (let i = 0; i < pixels.data.length; i += 4) {
+            let value = 0;
+            for (let r = 0; r < kernel.length; r++) {
+                for (let c = 0; c < kernel[r].length; c++) {
+                    const j = i + c * 4 + r * imageWidth * 4;
+                    if (j < pixels.data.length) {
+                        value += pixels.data[j] * kernel[r][c]
+                    }
+                }
+            }
+            pixels.data[i] = value;
+            pixels.data[i + 1] = value;
+            pixels.data[i + 2] = value;
+        }
+        return pixels;
+    }
+
+    const processImage = (pixels, imageWidth) => {
+        return applyKernel(grayscale(pixels), EDGE_DETECTION_KERNEL_2, imageWidth);
+    }
+
+</script>
+</body>
+</html>
