@@ -3,31 +3,33 @@
 <head>
     <title>Edge Detector</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<canvas id="canvas" width="500px" height="500px"></canvas>
-<video autoplay style="display: none"></video>
+<div class="container">
+    <canvas id="canvas"></canvas>
+    <video autoplay style="display: none"></video>
+</div>
 <script>
     const hasMediaDevices = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
     if (hasMediaDevices()) {
 
         const video = document.querySelector('video');
         const canvas = document.querySelector('canvas');
+        const [ width, height ] = [ canvas.offsetWidth, canvas.offsetHeight ];
+
         const ctx = canvas.getContext('2d');
 
         const constraints = {
-            video: {width: 320, height: 500, facingMode: 'environment'},
+            video: {width: width, height: height, facingMode: 'environment'},
         };
         navigator.mediaDevices.getUserMedia(constraints).then(stream => {
             video.srcObject = stream;
 
             setInterval(() => {
-                const w = video.videoWidth;
-                const h = video.videoHeight;
-
-                ctx.drawImage(video, 0, 0, w, h);
-                ctx.putImageData(processImage(ctx.getImageData(0, 0, w, h), w), 0, 0);
-            }, 40);
+                ctx.drawImage(video, 0, 0, width, height);
+                ctx.putImageData(processImage(ctx.getImageData(0, 0, width, height), width), 0, 0);
+            }, 50);
 
         });
 
