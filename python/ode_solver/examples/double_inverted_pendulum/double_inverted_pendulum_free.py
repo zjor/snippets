@@ -4,6 +4,7 @@ from ode_solver.ode_solver import solve, integrate_rk4
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
+from matplotlib.patches import Rectangle
 
 M = 5.0
 m1 = 2.0
@@ -15,7 +16,7 @@ g = 9.81
 # initial state
 X0 = 0.0  # cart position
 dX0 = 0.0  # cart velocity
-A0 = pi / 3  # angle of the first joint
+A0 = pi / 2  # angle of the first joint
 dA0 = 0.0  # angular velocity of the first joint
 B0 = pi / 5  # angle of the second joint
 dB0 = 0.0  # angular velocity of the second joint
@@ -63,7 +64,7 @@ def derivatives(state, step, t_, dt_):
     return [dx, ddx, da, dda, db, ddb]
 
 
-times = np.linspace(0, 8, 6000)
+times = np.linspace(0, 4, 4000)
 dt = times[1] - times[0]
 
 solution = solve(initial_state, times, integrate_rk4, derivatives)
@@ -83,14 +84,21 @@ ax = fig.add_subplot(111, autoscale_on=False, xlim=(-1, 1), ylim=(-1, 1))
 ax.set_aspect('equal')
 ax.grid()
 
+patch = ax.add_patch(Rectangle((0, 0), 0, 0, linewidth=1, edgecolor='k', facecolor='r'))
+
 line, = ax.plot([], [], 'o-', lw=2)
 time_template = 'time = %.1fs'
 time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
 
+cart_width = 0.15
+cart_height = 0.1
 
 def init():
     line.set_data([], [])
     time_text.set_text('')
+    patch.set_xy((-cart_width/2, -cart_height/2))
+    patch.set_width(cart_width)
+    patch.set_height(cart_height)
     return line, time_text
 
 
@@ -100,9 +108,13 @@ def animate(i):
 
     line.set_data(thisx, thisy)
     time_text.set_text(time_template % (i * dt))
-    return line, time_text
+
+    patch.set_x(x_solution[i] - cart_width/2)
+    return line, time_text, patch
 
 
 ani = animation.FuncAnimation(fig, animate, np.arange(1, len(solution)),
                               interval=1, blit=True, init_func=init)
 plt.show()
+
+# ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24)
