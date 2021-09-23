@@ -5,11 +5,11 @@ from ode_solver.ode_solver import solve, integrate_rk4
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
-M = 2.0
-m1 = 0.5
-m2 = 0.5
-l1 = 0.3
-l2 = 0.3
+M = 5.0
+m1 = 2.0
+m2 = 1.5
+l1 = 0.5
+l2 = 0.25
 g = 9.81
 
 # initial state
@@ -28,7 +28,7 @@ def derivatives(state, step, t_, dt_):
 
     dL_dx = 0.0
     dL_da = -(m1 + m2) * l1 * da * dx * sin(a) + (m1 + m2) * g * l1 * sin(a) - m2 * l1 * l2 * da * db * sin(a - b)
-    dL_db = -m2 * (dx * l2 * db * sin(b) + l1 * l2 * da * db * sin(a - b))
+    dL_db = m2 * l2 * (g * sin(b) + l1 * da * db * sin(a - b) - dx * db * sin(b))
 
     a11 = M + m1 + m2
     a12 = (m1 + m2) * l1 * cos(a)
