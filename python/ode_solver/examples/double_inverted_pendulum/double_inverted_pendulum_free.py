@@ -64,7 +64,7 @@ def derivatives(state, step, t_, dt_):
     return [dx, ddx, da, dda, db, ddb]
 
 
-times = np.linspace(0, 4, 4000)
+times = np.linspace(0, 3, 4500)
 dt = times[1] - times[0]
 
 solution = solve(initial_state, times, integrate_rk4, derivatives)

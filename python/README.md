@@ -15,3 +15,7 @@
 
 4. Stabilize with PID
 `python -m ode_solver.examples.balancing_robot.balancing_robot_friction_pid`
+
+### Double inverted pendulum on a card
+
+`python -m ode_solver.examples.double_inverted_pendulum.double_inverted_pendulum_free`
