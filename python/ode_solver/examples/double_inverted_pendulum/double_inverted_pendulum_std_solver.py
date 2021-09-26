@@ -4,7 +4,7 @@ References
 """
 import numpy as np
 from numpy import sin, cos, pi
-from ode_solver.ode_solver import solve, integrate_rk4
+import scipy.integrate as integrate
 from ode_solver.examples.double_inverted_pendulum.lqr import get_a_b, get_lqr_gains
 
 import matplotlib.pyplot as plt
@@ -21,34 +21,34 @@ g = 9.81
 # initial state
 X0 = 0.0  # cart position
 dX0 = 0.0  # cart velocity
-A0 = -0.2  # angle of the first joint
+A0 = -0.06  # angle of the first joint
 dA0 = 0.0  # angular velocity of the first joint
-B0 = 0.1  # angle of the second joint
+B0 = 0.06  # angle of the second joint
 dB0 = 0.0  # angular velocity of the second joint
 
 initial_state = np.array([X0, dX0, A0, dA0, B0, dB0])
 
 Q = np.array([
-    [1000000., .0, .0, .0, .0, .0],
-    [.0, 1., .0, .0, .0, .0],
-    [.0, .0, 1., .0, .0, .0],
+    [.1, .0, .0, .0, .0, .0],
+    [.0, 1000., .0, .0, .0, .0],
+    [.0, .0, 1000., .0, .0, .0],
     [.0, .0, .0, 1., .0, .0],
-    [.0, .0, .0, .0, 1., .0],
-    [.0, .0, .0, .0, .0, 1.],
+    [.0, .0, .0, .0, 100., .0],
+    [.0, .0, .0, .0, .0, 100.],
 ])
 
-R = np.array([[2000.]])
+R = np.array([[10000.]])
 A, B = get_a_b(M, m1, m2, l1, l2)
 K = get_lqr_gains(A, B, Q, R)
 
 U_log = []
 
 
-def derivatives(state, step, t_, dt_):
+def derivatives(state, t):
     x, dx, a, da, b, db = state
 
     _state = np.array([[x, a, b, dx, da, db]])
-    u = (-K @ _state.T)[0, 0]
+    u = -(-K @ _state.T)[0, 0]
     U_log.append(u)
 
     dL_dx = 0.0
@@ -91,21 +91,21 @@ def derivatives(state, step, t_, dt_):
 times = np.linspace(0, 3, 4500)
 dt = times[1] - times[0]
 
-solution = solve(initial_state, times, integrate_rk4, derivatives)
+solution = solution = integrate.odeint(derivatives, initial_state, times)
 
 x_solution = solution[:, 0]
 a_solution = solution[:, 2]
 b_solution = solution[:, 4]
 
-x_line, = plt.plot(times, x_solution[1:])
-a_line, = plt.plot(times, a_solution[1:])
-b_line, = plt.plot(times, b_solution[1:])
+x_line, = plt.plot(times, x_solution)
+a_line, = plt.plot(times, a_solution)
+b_line, = plt.plot(times, b_solution)
 plt.grid(True)
 plt.legend([x_line, a_line, b_line], ['x', 'a', 'b'])
 plt.show()
 
-# import sys
-# sys.exit(0)
+import sys
+sys.exit(0)
 
 
 j1_x = l1 * sin(a_solution) + x_solution
