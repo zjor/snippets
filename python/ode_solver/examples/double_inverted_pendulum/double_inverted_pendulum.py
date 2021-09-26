@@ -43,12 +43,22 @@ K = get_lqr_gains(A, B, Q, R)
 
 U_log = []
 
+disable_control_threshold = 1.5
+
+
+def get_control(state, t):
+    x, dx, a, da, b, db = state
+    if t < disable_control_threshold:
+        _state = np.array([[x, a, b, dx, da, db]])
+        return (-K @ _state.T)[0, 0]
+    else:
+        return .0
+
 
 def derivatives(state, step, t_, dt_):
     x, dx, a, da, b, db = state
 
-    _state = np.array([[x, a, b, dx, da, db]])
-    u = (-K @ _state.T)[0, 0]
+    u = get_control(state, t_)
     U_log.append(u)
 
     dL_dx = 0.0
@@ -88,7 +98,7 @@ def derivatives(state, step, t_, dt_):
     return [dx, ddx, da, dda, db, ddb]
 
 
-times = np.linspace(0, 3, 4500)
+times = np.linspace(0, 5, 6500)
 dt = times[1] - times[0]
 
 solution = solve(initial_state, times, integrate_rk4, derivatives)
@@ -122,8 +132,9 @@ ax.grid()
 patch = ax.add_patch(Rectangle((0, 0), 0, 0, linewidth=1, edgecolor='k', facecolor='r'))
 
 line, = ax.plot([], [], 'o-', lw=2)
-time_template = 'time = %.1fs'
+time_template = 'time: %.1f s'
 time_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+control_enabled_text = ax.text(0.05, 0.84, '', transform=ax.transAxes)
 
 cart_width = 0.15
 cart_height = 0.1
@@ -132,10 +143,11 @@ cart_height = 0.1
 def init():
     line.set_data([], [])
     time_text.set_text('')
+    control_enabled_text.set_text('')
     patch.set_xy((-cart_width / 2, -cart_height / 2))
     patch.set_width(cart_width)
     patch.set_height(cart_height)
-    return line, time_text
+    return line, time_text, control_enabled_text
 
 
 def animate(i):
@@ -144,9 +156,10 @@ def animate(i):
 
     line.set_data(thisx, thisy)
     time_text.set_text(time_template % (i * dt))
+    control_enabled_text.set_text(f'Regulator: {"ON" if (i * dt) < disable_control_threshold else "OFF"}')
 
     patch.set_x(x_solution[i] - cart_width / 2)
-    return line, time_text, patch
+    return line, time_text, patch, control_enabled_text
 
 
 ani = animation.FuncAnimation(fig, animate, np.arange(1, len(solution)),

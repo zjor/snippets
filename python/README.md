@@ -18,4 +18,4 @@
 
 ### Double inverted pendulum on a card
 
-`python -m ode_solver.examples.double_inverted_pendulum.double_inverted_pendulum_free`
+`python -m ode_solver.examples.double_inverted_pendulum.double_inverted_pendulum`
