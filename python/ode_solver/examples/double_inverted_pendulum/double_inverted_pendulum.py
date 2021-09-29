@@ -43,7 +43,7 @@ K = get_lqr_gains(A, B, Q, R)
 
 U_log = []
 
-disable_control_threshold = 1.5
+disable_control_threshold = 3.0
 
 
 def get_control(state, t):
@@ -98,7 +98,7 @@ def derivatives(state, step, t_, dt_):
     return [dx, ddx, da, dda, db, ddb]
 
 
-times = np.linspace(0, 5, 6500)
+times = np.linspace(0, 6, 6000)
 dt = times[1] - times[0]
 
 solution = solve(initial_state, times, integrate_rk4, derivatives)
@@ -116,6 +116,15 @@ plt.show()
 
 # import sys
 # sys.exit(0)
+
+skip_frames = 40
+
+x_solution = x_solution[::skip_frames]
+a_solution = a_solution[::skip_frames]
+b_solution = b_solution[::skip_frames]
+
+frames = len(x_solution)
+
 
 
 j1_x = l1 * sin(a_solution) + x_solution
@@ -155,15 +164,16 @@ def animate(i):
     thisy = [0, j1_y[i], j2_y[i]]
 
     line.set_data(thisx, thisy)
-    time_text.set_text(time_template % (i * dt))
-    control_enabled_text.set_text(f'Regulator: {"ON" if (i * dt) < disable_control_threshold else "OFF"}')
+    now = i * skip_frames * dt
+    time_text.set_text(time_template % now)
+    control_enabled_text.set_text(f'Regulator: {"ON" if now < disable_control_threshold else "OFF"}')
 
     patch.set_x(x_solution[i] - cart_width / 2)
     return line, time_text, patch, control_enabled_text
 
 
-ani = animation.FuncAnimation(fig, animate, np.arange(1, len(solution)),
-                              interval=1, blit=True, init_func=init)
+ani = animation.FuncAnimation(fig, animate, frames=frames,
+                              interval=40, blit=True, init_func=init)
 plt.show()
 
 # ani.save(f"{__file__[:-3]}.gif", writer='imagemagick', fps=24)
