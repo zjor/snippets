@@ -27,7 +27,7 @@ I = 0.5 * M * r
 
 th_pid = PIDController(k_p=40.0, k_d=20.0, k_i=0.0, target=0.0)
 
-velocity_pid = PIDController(k_p=0.02, k_d=0.0, k_i=0.0, target=-1.0)
+velocity_pid = PIDController(k_p=0.0085, k_d=0.0, k_i=0.001, target=0.0)
 
 position_pid = PIDController(k_p=0.07, k_d=0.07, k_i=0.0, target=0.0)
 
