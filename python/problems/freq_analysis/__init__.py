@@ -111,7 +111,7 @@ print_frequencies2(src_freqs, dst_freqs)
 
 print(guess_mapping(src_freqs, dst_freqs))
 
-cipher_file(output_filename, 'decoded.txt', guess_mapping(src_freqs, dst_freqs))
+# cipher_file(output_filename, 'decoded.txt', guess_mapping(src_freqs, dst_freqs))
 
 
 # c_k, d_k = generate_keys()
