@@ -4,11 +4,24 @@ const Color = require('canvas-sketch-util/color')
 const {degToRad} = require('canvas-sketch-util/math')
 const risoColors = require('riso-colors')
 
+const drawPolygon = ({context, x, y, r, sides = 3}) => {
+    context.translate(x, y)
+    context.beginPath()
+    context.moveTo(0, -r)
+    for (let i = 0; i < sides; i++) {
+        const angle = 2 * i * Math.PI / sides - Math.PI / 2
+        context.lineTo(r * Math.cos(angle), r * Math.sin(angle))
+    }
+    context.closePath()
+    context.stroke()
+}
+
 const skewedRect = (g, {w = 600, h = 200, degrees = -15, fill, stroke, blend}) => {
     const rx = Math.cos(degToRad(degrees)) * w
     const ry = Math.sin(degToRad(degrees)) * w
     g.fillStyle = fill;
     g.strokeStyle = stroke;
+
     g.save()
     g.translate(-rx / 2, -(ry + h) / 2)
     g.beginPath();
@@ -33,7 +46,6 @@ const skewedRect = (g, {w = 600, h = 200, degrees = -15, fill, stroke, blend}) =
     g.lineWidth = 2
     g.strokeStyle = 'black'
     g.stroke()
-
     g.restore()
 }
 
@@ -42,13 +54,23 @@ const settings = {
     animate: false
 };
 
-const rectColors = [
-    random.pick(risoColors).hex,
-    random.pick(risoColors).hex,
-    random.pick(risoColors).hex,
-]
-
 const sketch = ({width, height}) => {
+
+    random.setSeed(556)
+
+    const rectColors = [
+        random.pick(risoColors).hex,
+        random.pick(risoColors).hex,
+        random.pick(risoColors).hex,
+    ]
+
+    const mask = {
+        x: width * 0.5,
+        y: height * 0.58,
+        r: 400,
+        sides: 3,
+        lineWidth: 20
+    }
 
     const rects = []
     for (let i = 0; i < 15; i++) {
@@ -64,10 +86,16 @@ const sketch = ({width, height}) => {
     }
 
     return ({context: g, width, height}) => {
+        const {x, y, r, sides, lineWidth} = mask
         g.fillStyle = random.pick(risoColors).hex;
         g.fillRect(0, 0, width, height);
-
+        g.save()
+        drawPolygon({context: g, x, y, r, sides})
+        g.clip()
         g.lineWidth = 20
+
+        g.translate(-x, -y)
+
 
         rects.forEach(rect => {
             const {x, y} = rect
@@ -76,6 +104,14 @@ const sketch = ({width, height}) => {
             skewedRect(g, rect)
             g.restore();
         })
+
+        g.restore()
+
+        g.globalCompositeOperation = 'color-burn'
+        g.strokeStyle = rectColors[0]
+        g.lineWidth = lineWidth
+
+        drawPolygon({context: g, x, y, r: r - lineWidth, sides})
 
     };
 };
