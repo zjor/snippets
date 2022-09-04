@@ -1,10 +1,9 @@
 const canvasSketch = require('canvas-sketch');
 
 class Point {
-  constructor({x, y, control = false}) {
+  constructor({x, y}) {
     this.x = x
     this.y = y
-    this.control = control
     this.isDragging = false
     this.r = 10
   }
@@ -14,7 +13,7 @@ class Point {
     context.translate(this.x, this.y)
     context.beginPath()
     context.arc(0, 0, this.r, 0, Math.PI * 2)
-    context.fillStyle = this.control ? 'red' : 'black'
+    context.fillStyle = 'black'
     context.fill()
     context.restore()
   }
@@ -24,12 +23,19 @@ class Point {
     const dy = y - this.y
     return (dx * dx + dy * dy) <= this.r * this.r
   }
+
+  middle(other) {
+    const {x, y} = other
+    return new Point({x: (this.x + x) / 2, y: (this.y + y) / 2})
+  }
 }
 
 const points = [
   new Point({x: 50, y: 50}),
-  new Point({x: 100, y: 550, control: true}),
+  new Point({x: 100, y: 550}),
   new Point({x: 600, y: 200}),
+  new Point({x: 350, y: 150}),
+  new Point({x: 200, y: 700}),
 ]
 
 let _canvas
@@ -41,7 +47,16 @@ const onMouseDown = (e) => {
   const x = (e.offsetX / _canvas.offsetWidth) * _canvas.width
   const y = (e.offsetY / _canvas.offsetHeight) * _canvas.height
 
-  points.forEach(p => p.isDragging = p.hasHit(x, y))
+  let hasHit = false
+
+  points.forEach(p => {
+    p.isDragging = p.hasHit(x, y)
+    hasHit = hasHit || p.isDragging
+  })
+
+  if (!hasHit) {
+    points.push(new Point({x, y}))
+  }
 }
 
 const onMouseMove = (e) => {
@@ -67,7 +82,10 @@ const dashedLine = (context, start, end) => {
   context.moveTo(start.x, start.y)
   context.lineTo(end.x, end.y)
   context.setLineDash([5, 5])
+  context.lineWidth = 1.0
+  context.strokeStyle = 'grey'
   context.stroke()
+  context.setLineDash([])
 }
 
 const settings = {
@@ -83,15 +101,28 @@ const sketch = ({canvas}) => {
     context.fillStyle = 'white';
     context.fillRect(0, 0, width, height);
 
+    for (let i = 1; i < points.length; i++) {
+      const m = points[i - 1].middle(points[i])
+      context.beginPath()
+      context.arc(m.x, m.y, 5, 0, Math.PI * 2)
+      context.fillStyle = 'black'
+      context.fill()
+    }
 
-    context.beginPath()
-    context.moveTo(points[0].x, points[0].y)
-    context.quadraticCurveTo(points[1].x, points[1].y, points[2].x, points[2].y)
-    context.strokeStyle = 'black'
-    context.stroke()
+    for (let i = 1; i < points.length - 1; i++) {
+      const start = points[i - 1].middle(points[i])
+      const end = points[i].middle(points[i + 1])
 
-    dashedLine(context, points[0], points[1])
-    dashedLine(context, points[1], points[2])
+      dashedLine(context, points[i - 1], points[i])
+      dashedLine(context, points[i], points[i + 1])
+
+      context.beginPath()
+      context.moveTo(start.x, start.y)
+      context.quadraticCurveTo(points[i].x, points[i].y, end.x, end.y)
+      context.lineWidth = 3.0
+      context.strokeStyle = 'blue'
+      context.stroke()
+    }
 
     points.forEach(p => p.draw(context))
 
