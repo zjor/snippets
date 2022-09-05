@@ -56,7 +56,7 @@ const settings = {
 
 const sketch = ({width, height}) => {
 
-    random.setSeed(556)
+    random.setSeed(560)
 
     const rectColors = [
         random.pick(risoColors).hex,

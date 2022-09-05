@@ -30,6 +30,34 @@ class Point {
   }
 }
 
+const dashedLine = (context, start, end) => {
+  context.beginPath()
+  context.moveTo(start.x, start.y)
+  context.lineTo(end.x, end.y)
+  context.setLineDash([5, 5])
+  context.lineWidth = 1.0
+  context.strokeStyle = 'grey'
+  context.stroke()
+  context.setLineDash([])
+}
+
+const drawCurve = (context, points) => {
+  for (let i = 1; i < points.length - 1; i++) {
+    const start = points[i - 1].middle(points[i])
+    const end = points[i].middle(points[i + 1])
+
+    dashedLine(context, points[i - 1], points[i])
+    dashedLine(context, points[i], points[i + 1])
+
+    context.beginPath()
+    context.moveTo(start.x, start.y)
+    context.quadraticCurveTo(points[i].x, points[i].y, end.x, end.y)
+    context.lineWidth = 3.0
+    context.strokeStyle = 'blue'
+    context.stroke()
+  }
+}
+
 const points = [
   new Point({x: 50, y: 50}),
   new Point({x: 100, y: 550}),
@@ -77,17 +105,6 @@ const onMouseUp = (e) => {
   points.forEach(p => p.isDragging = false)
 }
 
-const dashedLine = (context, start, end) => {
-  context.beginPath()
-  context.moveTo(start.x, start.y)
-  context.lineTo(end.x, end.y)
-  context.setLineDash([5, 5])
-  context.lineWidth = 1.0
-  context.strokeStyle = 'grey'
-  context.stroke()
-  context.setLineDash([])
-}
-
 const settings = {
   dimensions: [1080, 1080],
   animate: true
@@ -109,20 +126,7 @@ const sketch = ({canvas}) => {
       context.fill()
     }
 
-    for (let i = 1; i < points.length - 1; i++) {
-      const start = points[i - 1].middle(points[i])
-      const end = points[i].middle(points[i + 1])
-
-      dashedLine(context, points[i - 1], points[i])
-      dashedLine(context, points[i], points[i + 1])
-
-      context.beginPath()
-      context.moveTo(start.x, start.y)
-      context.quadraticCurveTo(points[i].x, points[i].y, end.x, end.y)
-      context.lineWidth = 3.0
-      context.strokeStyle = 'blue'
-      context.stroke()
-    }
+    drawCurve(context, points)
 
     points.forEach(p => p.draw(context))
 
