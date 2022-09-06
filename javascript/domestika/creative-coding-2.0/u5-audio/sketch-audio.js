@@ -1,5 +1,7 @@
 const canvasSketch = require('canvas-sketch');
 const math = require('canvas-sketch-util/math')
+const random = require('canvas-sketch-util/random')
+const colormap = require('colormap')
 
 const settings = {
   dimensions: [1080, 1080],
@@ -10,12 +12,24 @@ let audio
 let audioContext, sourceNode, analyzerNode, audioData
 let manager
 
+const fftSize = 512
+const smoothingTimeConstant = 0.95
+
 const sketch = () => {
 
-  const bins = [3, 17, 34]
+  const bins = []
+  for (let i = 0; i < fftSize / 8; i++) {
+    bins.push(random.rangeFloor(1, fftSize / 2))
+  }
+
+  const colors = colormap({
+    colormap: 'bone',
+    nshades: bins.length
+  })
+
 
   return ({context, width, height}) => {
-    context.fillStyle = 'white';
+    context.fillStyle = '#f7ecbc';
     context.fillRect(0, 0, width, height);
 
     if (!audioContext) {
@@ -23,21 +37,25 @@ const sketch = () => {
     }
 
     analyzerNode.getFloatFrequencyData(audioData)
+    context.save()
+    context.translate(width / 2, height / 2)
 
     for (let i = 0; i < bins.length; i++) {
       const bin = bins[i]
-      const mapped = math.mapRange(audioData[bin], analyzerNode.minDecibels, analyzerNode.maxDecibels, 0, 1, true)
-      const radius = mapped * 200
+      const [d, mi, ma] = [audioData[bin], analyzerNode.minDecibels, analyzerNode.maxDecibels]
+      const mapped = math.mapRange(d, mi, ma, 0, 1, true)
+      const radius = mapped * 300
 
-      context.save()
-      context.translate(width / 2, height / 2)
-      context.lineWidth = 10
+      const color = Math.floor(math.mapRange(d, mi, ma, 0, bins.length, true))
+      const lineWidth = math.mapRange(d, mi, ma, 0, 15, true)
+
+      context.lineWidth = lineWidth
       context.beginPath()
       context.arc(0, 0, radius, 0, Math.PI * 2)
+      context.strokeStyle = colors[color]
       context.stroke()
-
-      context.restore()
     }
+    context.restore()
   };
 };
 
@@ -50,8 +68,8 @@ const createAudio = () => {
   sourceNode.connect(audioContext.destination)
 
   analyzerNode = audioContext.createAnalyser()
-  analyzerNode.fftSize = 512
-  analyzerNode.smoothingTimeConstant = 0.9
+  analyzerNode.fftSize = fftSize
+  analyzerNode.smoothingTimeConstant = smoothingTimeConstant
   sourceNode.connect(analyzerNode)
 
   audioData = new Float32Array(analyzerNode.frequencyBinCount)
