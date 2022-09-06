@@ -93,13 +93,6 @@ const addListeners = () => {
 
 addListeners()
 
-const getAverage = () => {
-  let s = 0
-  audioData.forEach(d => s += d)
-  s /= audioData.length
-  return s
-}
-
 const start = async () => {
   manager = await canvasSketch(sketch, settings)
   manager.pause()
