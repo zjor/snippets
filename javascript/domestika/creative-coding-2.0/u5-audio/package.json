@@ -12,6 +12,7 @@
   "dependencies": {
     "canvas-sketch": "^0.7.6",
     "canvas-sketch-util": "^1.10.0",
-    "colormap": "^2.3.2"
+    "colormap": "^2.3.2",
+    "eases": "^1.0.8"
   }
 }
