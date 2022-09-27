@@ -79,7 +79,9 @@ const sketch = () => {
 
 const createAudio = () => {
   audio = document.createElement('audio')
+  audio.crossOrigin = 'anonymous'
   audio.src = `audio/${audioFilename}`
+  // audio.src = 'https://audio-c0253ca5.s3.filebase.com/kokokaka-ring-the-bell-tony.mp3'
 
   audioContext = new AudioContext()
   sourceNode = audioContext.createMediaElementSource(audio)
