@@ -14,6 +14,7 @@ let audioContext, sourceNode, analyzerNode, audioData
 let manager
 // const audioFilename = 'kokokaka-ring-the-bell-tony.mp3'
 // const audioFilename = 'samlight_take_me_back.mp3'
+const bucketName = 'audio-c0253ca5'
 const audioFilename = 'balloonplanet_adrenaline.mp3'
 
 const fftSize = 512
@@ -80,8 +81,7 @@ const sketch = () => {
 const createAudio = () => {
   audio = document.createElement('audio')
   audio.crossOrigin = 'anonymous'
-  audio.src = `audio/${audioFilename}`
-  // audio.src = 'https://audio-c0253ca5.s3.filebase.com/kokokaka-ring-the-bell-tony.mp3'
+  audio.src = `https://${bucketName}.s3.filebase.com/${audioFilename}`
 
   audioContext = new AudioContext()
   sourceNode = audioContext.createMediaElementSource(audio)

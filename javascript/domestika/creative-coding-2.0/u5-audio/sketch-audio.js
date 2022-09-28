@@ -12,6 +12,9 @@ let audio
 let audioContext, sourceNode, analyzerNode, audioData
 let manager
 
+const bucketName = 'audio-c0253ca5'
+const audioFilename = 'kokokaka-ring-the-bell-tony.mp3'
+
 const fftSize = 512
 const smoothingTimeConstant = 0.95
 
@@ -61,7 +64,8 @@ const sketch = () => {
 
 const createAudio = () => {
   audio = document.createElement('audio')
-  audio.src = 'audio/kokokaka-ring-the-bell-tony.mp3'
+  audio.crossOrigin = 'anonymous'
+  audio.src = `https://${bucketName}.s3.filebase.com/${audioFilename}`
 
   audioContext = new AudioContext()
   sourceNode = audioContext.createMediaElementSource(audio)
