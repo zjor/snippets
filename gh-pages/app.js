@@ -29,6 +29,18 @@ createApp({
           img: `${URL_PREFIX}/images/curves-grid-preview.png`,
           alt: 'curves-grid-preview',
           description: 'Curves: grid'
+        },
+        {
+          href: `${URL_PREFIX}/dist/cc2.0/u5/audio-tony.html`,
+          img: `${URL_PREFIX}/images/audio-tony-preview.png`,
+          alt: 'audio-tony-preview',
+          description: 'Audio: Tony'
+        },
+        {
+          href: `${URL_PREFIX}/dist/cc2.0/u5/audio-concentric.html`,
+          img: `${URL_PREFIX}/images/audio-concentric-preview.png`,
+          alt: 'audio-concentric-preview',
+          description: 'Audio: Concentric'
         }
       ]
     }
