@@ -1,4 +1,5 @@
-const URL_PREFIX = '/snippets'
+// const URL_PREFIX = '/snippets'
+const URL_PREFIX = ''
 
 const {createApp} = Vue
 
