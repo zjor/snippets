@@ -69,7 +69,7 @@ const sketch = ({width, height}) => {
   const mask = {
     x: width * 0.5,
     y: height * 0.58,
-    r: 400,
+    r: 500,
     sides: 3,
     lineWidth: 20
   }
@@ -86,11 +86,10 @@ const sketch = ({width, height}) => {
     g.fillRect(0, 0, width, height);
     g.save()
     drawPolygon({context: g, x, y, r, sides})
-    // g.clip()
+    g.clip()
     g.lineWidth = 20
 
     g.translate(-x, -y)
-
 
     rects.forEach(rect => {
       rect.draw(g)
@@ -213,8 +212,7 @@ class Rect {
 
 /*
 TODO:
-    - regenerate rects of disappeared
-    - show faded shapes outside clipped area
-    - white & red version
-    - add sound, increase size on the beat
+  - show faded shapes outside clipped area
+  - white & red version
+  - add sound, increase size on the beat
  */
