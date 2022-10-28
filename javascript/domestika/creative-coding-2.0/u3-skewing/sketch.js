@@ -51,12 +51,14 @@ const skewedRect = (g, {w = 600, h = 200, degrees = -15, fill, stroke, blend}) =
 
 const settings = {
     dimensions: [1080, 1080],
-    animate: false
+    animate: true
 };
 
 const sketch = ({width, height}) => {
 
     random.setSeed(560)
+
+    const bgColor = random.pick(risoColors).hex
 
     const rectColors = [
         random.pick(risoColors).hex,
@@ -81,13 +83,14 @@ const sketch = ({width, height}) => {
         const fill = random.pick(rectColors)
         const stroke = random.pick(rectColors)
         const blend = random.pick(['overlay', 'source-over'])
+        const v = random.range(-0.9, 0.9)
 
-        rects.push({x, y, w, h, fill, stroke, blend})
+        rects.push(new Rect({x, y, v, w, h, skewness: -15, fill, stroke, blend}))
     }
 
-    return ({context: g, width, height}) => {
+    return ({context: g, width, height, frame}) => {
         const {x, y, r, sides, lineWidth} = mask
-        g.fillStyle = random.pick(risoColors).hex;
+        g.fillStyle = bgColor;
         g.fillRect(0, 0, width, height);
         g.save()
         drawPolygon({context: g, x, y, r, sides})
@@ -98,11 +101,13 @@ const sketch = ({width, height}) => {
 
 
         rects.forEach(rect => {
-            const {x, y} = rect
-            g.save()
-            g.translate(x, y)
-            skewedRect(g, rect)
-            g.restore();
+            rect.draw(g)
+            rect.advance()
+            /*
+            if (rect.hasEscaped()) {
+                rect.regenerate()
+            }
+             */
         })
 
         g.restore()
@@ -117,3 +122,77 @@ const sketch = ({width, height}) => {
 };
 
 canvasSketch(sketch, settings);
+
+class Rect {
+    constructor({x, y, v, w, h, skewness, fill, stroke, blend}) {
+        this.x = x
+        this.y = y
+        this.w = w
+        this.h = h
+        this.skewness = skewness
+        this.fill = fill
+        this.stroke = stroke
+        this.blend = blend
+
+        const [c, s] = [Math.cos(degToRad(skewness)), Math.sin(degToRad(skewness))]
+
+        this.vx = c * v
+        this.vy = s * v
+    }
+
+    drawSkewedRect(g) {
+        g.fillStyle = this.fill;
+        g.strokeStyle = this.stroke;
+
+        g.save()
+
+        const [c, s] = [Math.cos(degToRad(this.skewness)), Math.sin(degToRad(this.skewness))]
+        const [rx, ry] = [c * this.w, s * this.w]
+
+        g.translate(-rx / 2, -(ry + this.h) / 2)
+        g.beginPath();
+        g.moveTo(0, 0);
+        g.lineTo(rx, ry)
+        g.lineTo(rx, ry + this.h)
+        g.lineTo(0, this.h)
+        g.closePath()
+
+        g.globalCompositeOperation = this.blend
+        g.fill()
+        const shadowColor = Color.offsetHSL(this.fill, 0, 0, -20)
+        shadowColor.rgba[3] = 0.5
+        g.shadowColor = Color.style(shadowColor.rgba)
+        g.shadowOffsetX = -10
+        g.shadowOffsetY = 20
+
+        g.shadowColor = null;
+        g.stroke()
+
+        g.globalCompositeOperation = 'source-over'
+        g.lineWidth = 2
+        g.strokeStyle = 'black'
+        g.stroke()
+        g.restore()
+    }
+
+    draw(context) {
+        context.save()
+        context.translate(this.x, this.y)
+        this.drawSkewedRect(context)
+        context.restore()
+    }
+
+    advance() {
+        this.x += this.vx
+        this.y += this.vy
+    }
+
+}
+
+/*
+TODO:
+    - regenerate rects of disappeared
+    - show faded shapes outside clipped area
+    - white & red version
+    - add sound, increase size on the beat
+ */
