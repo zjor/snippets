@@ -4,16 +4,64 @@ const Color = require('canvas-sketch-util/color')
 const {degToRad} = require('canvas-sketch-util/math')
 const risoColors = require('riso-colors')
 
-const drawPolygon = ({context, x, y, r, sides = 3}) => {
-  context.translate(x, y)
-  context.beginPath()
-  context.moveTo(0, -r)
+const hexToRgba = (hex, alpha = 1) => {
+  hex = hex.toUpperCase();
+
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+const withContext = (context, func) => {
+  context.save()
+  func(context)
+  context.restore()
+}
+
+const getPolygonPoints = ({x, y, r, sides = 3}) => {
+  const points = []
   for (let i = 0; i < sides; i++) {
     const angle = 2 * i * Math.PI / sides - Math.PI / 2
-    context.lineTo(r * Math.cos(angle), r * Math.sin(angle))
+    const [_x, _y] = [r * Math.cos(angle), r * Math.sin(angle)]
+    points.push({x: x + _x, y: y + _y})
+  }
+  return points
+}
+
+const drawPolygon = ({context, x, y, r, sides = 3}) => {
+  context.beginPath()
+  let points = getPolygonPoints({x, y, r, sides})
+
+  context.moveTo(points[0].x, points[0].y)
+  for (let i = 1; i < sides; i++) {
+    const {x, y} = points[i]
+    context.lineTo(x, y)
   }
   context.closePath()
   context.stroke()
+}
+
+const drawStencil = ({g, x, y, r, sides, width, height, fillStyle}) => {
+  g.beginPath();
+
+  //outer shape, clockwise
+  g.moveTo(0, 0);
+  g.lineTo(width, 0);
+  g.lineTo(width, height);
+  g.lineTo(0, height);
+  g.closePath();
+
+  // inner shape (hole), counter-clockwise
+  const points = getPolygonPoints({x, y, r, sides}).reverse()
+  const {x: x0, y: y0} = points[0]
+  g.moveTo(x0, y0)
+  points.slice(1).forEach(({x, y}) => g.lineTo(x, y))
+  g.closePath()
+
+  g.fillStyle = fillStyle
+  g.fill()
 }
 
 const skewedRect = (g, {w = 600, h = 200, degrees = -15, fill, stroke, blend}) => {
@@ -56,7 +104,7 @@ const settings = {
 
 const sketch = ({width, height}) => {
 
-  random.setSeed(560)
+  random.setSeed(561)
 
   const bgColor = random.pick(risoColors).hex
 
@@ -80,16 +128,14 @@ const sketch = ({width, height}) => {
     rects.push(new Rect({...params, skewness: -15}))
   }
 
-  return ({context: g, width, height, frame}) => {
+  return ({context: g, width, height}) => {
     const {x, y, r, sides, lineWidth} = mask
+
     g.fillStyle = bgColor;
     g.fillRect(0, 0, width, height);
     g.save()
     drawPolygon({context: g, x, y, r, sides})
-    g.clip()
     g.lineWidth = 20
-
-    g.translate(-x, -y)
 
     rects.forEach(rect => {
       rect.draw(g)
@@ -101,11 +147,21 @@ const sketch = ({width, height}) => {
 
     g.restore()
 
-    g.globalCompositeOperation = 'color-burn'
-    g.strokeStyle = rectColors[0]
-    g.lineWidth = lineWidth
+    withContext(g, g => {
+      g.globalCompositeOperation = 'color-burn'
+      g.strokeStyle = rectColors[0]
+      g.lineWidth = lineWidth
 
-    drawPolygon({context: g, x, y, r: r - lineWidth, sides})
+      drawPolygon({context: g, x, y, r: r - lineWidth, sides})
+    })
+
+    withContext(g, g => {
+      g.strokeStyle = 'black'
+      drawPolygon({context: g, x, y, r, sides})
+      g.globalCompositeOperation = 'source-over'
+    })
+
+    drawStencil({g, x, y, r, sides, width, height, fillStyle: hexToRgba(bgColor, 0.8)})
 
   };
 };
@@ -185,7 +241,16 @@ class Rect {
   }
 
   regenerate() {
-    const {x, y, w, h, fill, stroke, blend, v} = Rect.generateParams(this.canvasWidth, this.canvasHeight, this.rectColors)
+    const {
+      x,
+      y,
+      w,
+      h,
+      fill,
+      stroke,
+      blend,
+      v
+    } = Rect.generateParams(this.canvasWidth, this.canvasHeight, this.rectColors)
     this.x = v > 0 ? -w / 2 : this.canvasWidth + w / 2
     this.y = y
     this.w = w
@@ -212,7 +277,6 @@ class Rect {
 
 /*
 TODO:
-  - show faded shapes outside clipped area
   - white & red version
   - add sound, increase size on the beat
  */
