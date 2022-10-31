@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+</head>
+<body>
+
+<button id="connect">Connect</button>
+
+<script>
+  const log = console.log
+
+  async function main() {
+    log('Connecting...')
+    const ble = navigator.bluetooth
+    if (!await ble.getAvailability()) {
+      log('BLE is not available')
+      return
+    }
+    const serviceUUID = 'B93C75B9-F52B-4C4B-8F4B-C48FD6A42CD1'.toLowerCase()
+    const device = await ble.requestDevice({
+      filters: [
+        {
+          services: [serviceUUID]
+        }
+      ]
+    })
+    const {id, name} = device
+    log(`Paired to (${name}; ID: ${id})`)
+
+    const server = await device.gatt.connect()
+    log(server)
+
+    const service = await server.getPrimaryService(serviceUUID)
+    log(service)
+
+    const characteristic = await service.getCharacteristic(serviceUUID)
+    log(characteristic)
+    log(`Value: ${JSON.stringify((await characteristic.readValue()).getUint8())}`)
+    await characteristic.startNotifications()
+    characteristic.addEventListener('characteristicvaluechanged', e => {
+      log(e.target.value.getUint8(0))
+    })
+  }
+
+  document.querySelector('#connect').addEventListener('click', main)
+
+</script>
+</body>
+</html>
