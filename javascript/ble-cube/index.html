@@ -6,9 +6,27 @@
 <body>
 
 <button id="connect">Connect</button>
+<div>
+    <div>
+        Roll: <span id="roll"></span>
+    </div>
+    <div>
+        Pitch: <span id="pitch"></span>
+    </div>
+</div>
 
 <script>
   const log = console.log
+
+  const arrayBufferToString = (buffer) => String.fromCharCode.apply(null, new Uint8Array(buffer))
+
+  const parseRollPitch = (str) => {
+    const [roll, pitch] = str.split('\t').map(v => Number.parseFloat(v))
+    return {roll, pitch}
+  }
+
+  const rollSpan = document.querySelector('#roll')
+  const pitchSpan = document.querySelector('#pitch')
 
   async function main() {
     log('Connecting...')
@@ -36,10 +54,19 @@
 
     const characteristic = await service.getCharacteristic(serviceUUID)
     log(characteristic)
-    log(`Value: ${JSON.stringify((await characteristic.readValue()).getUint8())}`)
+
+    const value = await characteristic.readValue()
+    log(value.buffer)
+
+    const {roll, pitch} = parseRollPitch(arrayBufferToString(value.buffer))
+    console.log(roll, pitch)
+
     await characteristic.startNotifications()
     characteristic.addEventListener('characteristicvaluechanged', e => {
-      log(e.target.value.getUint8(0))
+      const val = arrayBufferToString(e.target.value.buffer)
+      const {roll, pitch} = parseRollPitch(val)
+      rollSpan.textContent = roll
+      pitchSpan.textContent = pitch
     })
   }
 
