@@ -1,77 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-
+    <meta charset="utf-8">
+    <meta name=viewport content="width=device-width,shrink-to-fit=0,user-scalable=no,minimum-scale=1,maximum-scale=1">
+    <link rel="shortcut icon" href="#" />
+    <link rel="stylesheet" type="text/css" href="css/styles.css">
+    <script src="js/three.js"></script>
 </head>
 <body>
 
-<button id="connect">Connect</button>
-<div>
-    <div>
-        Roll: <span id="roll"></span>
+<div id="container">
+    <button id="connect">Connect</button>
+    <div id="sensor-data-container">
+        <div>
+            Roll: <span id="roll"></span>
+        </div>
+        <div>
+            Pitch: <span id="pitch"></span>
+        </div>
     </div>
-    <div>
-        Pitch: <span id="pitch"></span>
+
+    <div class="card" id="scene">
+
     </div>
 </div>
 
-<script>
-  const log = console.log
+<script src="js/scene.js"></script>
+<script src="js/script.js"></script>
 
-  const arrayBufferToString = (buffer) => String.fromCharCode.apply(null, new Uint8Array(buffer))
-
-  const parseRollPitch = (str) => {
-    const [roll, pitch] = str.split('\t').map(v => Number.parseFloat(v))
-    return {roll, pitch}
-  }
-
-  const rollSpan = document.querySelector('#roll')
-  const pitchSpan = document.querySelector('#pitch')
-
-  async function main() {
-    log('Connecting...')
-    const ble = navigator.bluetooth
-    if (!await ble.getAvailability()) {
-      log('BLE is not available')
-      return
-    }
-    const serviceUUID = 'B93C75B9-F52B-4C4B-8F4B-C48FD6A42CD1'.toLowerCase()
-    const device = await ble.requestDevice({
-      filters: [
-        {
-          services: [serviceUUID]
-        }
-      ]
-    })
-    const {id, name} = device
-    log(`Paired to (${name}; ID: ${id})`)
-
-    const server = await device.gatt.connect()
-    log(server)
-
-    const service = await server.getPrimaryService(serviceUUID)
-    log(service)
-
-    const characteristic = await service.getCharacteristic(serviceUUID)
-    log(characteristic)
-
-    const value = await characteristic.readValue()
-    log(value.buffer)
-
-    const {roll, pitch} = parseRollPitch(arrayBufferToString(value.buffer))
-    console.log(roll, pitch)
-
-    await characteristic.startNotifications()
-    characteristic.addEventListener('characteristicvaluechanged', e => {
-      const val = arrayBufferToString(e.target.value.buffer)
-      const {roll, pitch} = parseRollPitch(val)
-      rollSpan.textContent = roll
-      pitchSpan.textContent = pitch
-    })
-  }
-
-  document.querySelector('#connect').addEventListener('click', main)
-
-</script>
 </body>
 </html>
