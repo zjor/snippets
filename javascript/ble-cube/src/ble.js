@@ -62,4 +62,12 @@ async function main() {
   })
 }
 
-document.querySelector('#connect').addEventListener('click', main)
+function bleStub() {
+  const {roll, pitch} = window.state
+  updateRollPitch(roll + 0.01, pitch + 0.02)
+  requestAnimationFrame(bleStub)
+}
+
+// document.querySelector('#connect').addEventListener('click', main)
+
+export {bleStub}
