@@ -65,12 +65,17 @@ async function main() {
 function bleStub() {
   const frame = window.state.frame || 0
   window.state.frame = frame + 1
-  const w = frame / 75
-  const [roll, pitch] = [0.2 * Math.sin(3 * w), 0.2 * Math.cos(5 * w)]
+  const w = frame / 1000
+  const amp = 2.0
+  const [roll, pitch] = [
+    amp * Math.sin(3 * w),
+    amp * Math.cos(7 * w)
+  ]
+
   updateRollPitch(roll, pitch)
   requestAnimationFrame(bleStub)
 }
 
-// document.querySelector('#connect').addEventListener('click', main)
+document.querySelector('#connect').addEventListener('click', main)
 
 export {bleStub}

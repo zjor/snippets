@@ -22,7 +22,7 @@ function createSquareFace(v1, v2, v3, v4, n, color) {
   ])
   const material = new THREE.MeshPhongMaterial({color});
   const mesh = new THREE.Mesh(geometry, material);
-  return {geometry, material, mesh, normal: n}
+  return {geometry, material, mesh, normal: new THREE.Vector3(...n)}
 }
 
 class MyCube {
@@ -49,7 +49,7 @@ class MyCube {
         [-1, 1, -1],
         [1, 1, -1],
         [0.0, 0.0, -1.0],
-        0xfafa00
+        0xfa5a2d
       )
     )
 
@@ -70,7 +70,7 @@ class MyCube {
       createSquareFace(
         [1, -1, 1],
         [-1, -1, 1],
-        [-1,-1, -1],
+        [-1, -1, -1],
         [1, -1, -1],
         [0.0, -1.0, 0.0],
         0xfa0000
@@ -102,6 +102,7 @@ class MyCube {
     )
 
   }
+
   addToScene(scene) {
     this.faces.forEach(({mesh}) => scene.add(mesh))
   }
@@ -110,6 +111,36 @@ class MyCube {
     this.faces.forEach(({mesh}) => {
       mesh.rotation.x = pitch
       mesh.rotation.z = roll
+    })
+  }
+
+  getTopFaceIndex() {
+    const yAxis = new THREE.Vector3(0, 1, 0)
+    const top = this.faces.map(({mesh, normal}, i) => {
+      const copy = normal.clone()
+      return {i, cos: copy.applyEuler(mesh.rotation).dot(yAxis)}
+    }).sort((a, b) => a.cos - b.cos)
+      .reverse()[0]
+    log(top)
+    if (top.cos >= .85) {
+      return top.i
+    } else {
+      return -1
+    }
+
+  }
+
+  glowTopFace() {
+    const index = this.getTopFaceIndex()
+    this.faces.forEach(({mesh, material}, i) => {
+      if (i === index) {
+        const lightMaterial = material.clone()
+        lightMaterial.emissive = material.color
+        lightMaterial.emissiveIntensity = 5
+        mesh.material = lightMaterial
+      } else {
+        mesh.material = material
+      }
     })
   }
 }
@@ -125,6 +156,11 @@ renderer.toneMapping = THREE.ReinhardToneMapping;
 sceneElement.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
+const axesHelper = new THREE.AxesHelper(1)
+axesHelper.translateX(-2)
+axesHelper.translateY(-2)
+axesHelper.translateZ(2)
+scene.add(axesHelper);
 const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
 
 (new OrbitControls(camera, renderer.domElement))
@@ -155,6 +191,7 @@ function animate() {
 
   const {roll, pitch} = window.state
   cube.setRollPitch(roll, pitch)
+  cube.glowTopFace()
 
   const now = millis()
   if (now - lastUpdateTimestamp >= 1500) {
