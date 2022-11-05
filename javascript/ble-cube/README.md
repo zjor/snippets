@@ -12,5 +12,6 @@ This example demonstrates how to use BLE on the frontend.
  
 - apply different color to each edge of the cube
 - highlight the edge when it is at the top
+- apply shaders: https://threejs.org/examples/?q=bloom#webgl_postprocessing_unreal_bloom_selective  
 - add neon light when the edge is highlighted
 - control the cube's orientation with a roll/pitch via BLE
