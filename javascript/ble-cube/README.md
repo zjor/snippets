@@ -6,11 +6,10 @@ This example demonstrates how to use BLE on the frontend.
 ## References
 
 - [Browser Bluetooth support](https://web.dev/bluetooth/)
+- [Three JS Tutorial](https://r105.threejsfundamentals.org/threejs/lessons/threejs-custom-geometry.html)
 
 ## TODO
-
-- enable module imports & share data via modules
-  
+ 
 - apply different color to each edge of the cube
 - highlight the edge when it is at the top
 - add neon light when the edge is highlighted

@@ -63,8 +63,11 @@ async function main() {
 }
 
 function bleStub() {
-  const {roll, pitch} = window.state
-  updateRollPitch(roll + 0.01, pitch + 0.02)
+  const frame = window.state.frame || 0
+  window.state.frame = frame + 1
+  const w = frame / 75
+  const [roll, pitch] = [0.2 * Math.sin(3 * w), 0.2 * Math.cos(5 * w)]
+  updateRollPitch(roll, pitch)
   requestAnimationFrame(bleStub)
 }
 
