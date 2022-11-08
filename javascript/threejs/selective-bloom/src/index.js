@@ -3,9 +3,16 @@ import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 
+import {BloomingGeometry} from "./bloomingGeometry";
+
 const log = console.log
+const millis = () => (new Date()).getTime()
+
+const NORMAL_LAYER = 0;
+const BLOOM_LAYER = 1;
 
 const createScene = () => {
   const scene = new THREE.Scene();
@@ -15,19 +22,43 @@ const createScene = () => {
     antialias: true
   });
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.toneMapping = THREE.ReinhardToneMapping;
   document.body.appendChild(renderer.domElement);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  return {scene, camera, renderer};
+  const orbitControls = new OrbitControls(camera, renderer.domElement);
+  orbitControls.autoRotate = true
+  orbitControls.autoRotateSpeed = 5.0
+  return {scene, camera, renderer, orbitControls};
 }
 
-const {scene, camera, renderer} = createScene();
+const addLight = (scene) => {
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.x = 0;
+  directionalLight.position.y = 5;
+  directionalLight.position.z = 5;
+  scene.add(directionalLight);
+  scene.add(new THREE.AmbientLight(0x404040));
+}
 
-const geometry = new THREE.BoxGeometry(1, 1, 1);
-const wireframeGeometry = new THREE.EdgesGeometry(geometry);
-const material = new THREE.LineBasicMaterial({color: 0x00ff00, lineWidth: 2});
-const wireframe = new THREE.LineSegments(wireframeGeometry, material);
-scene.add(wireframe);
+const {scene, camera, renderer, orbitControls} = createScene();
+addLight(scene);
+
+const objects = [
+  new BloomingGeometry(
+    new THREE.SphereGeometry(0.5),
+    new THREE.MeshPhongMaterial({color: 0xff0000}),
+    {x: -1, y: 0, z: 0},
+    true
+  ),
+  new BloomingGeometry(
+    new THREE.SphereGeometry(0.5),
+    new THREE.MeshPhongMaterial({color: 0x00ff00}),
+    {x: 1, y: 0, z: 0},
+    false
+  )
+]
+
+objects.forEach(obj => scene.add(obj.mesh))
 
 camera.position.z = 5;
 
@@ -46,18 +77,65 @@ const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, windo
   bloomConfig.radius,
   bloomConfig.threshold)
 
+const bloomComposer = new EffectComposer(renderer);
+bloomComposer.renderToScreen = false;
+bloomComposer.addPass(renderPass);
+bloomComposer.addPass(bloomPass);
+
+const finalPass = new ShaderPass(
+  new THREE.ShaderMaterial({
+    uniforms: {
+      baseTexture: {value: null},
+      bloomTexture: {value: bloomComposer.renderTarget2.texture}
+    },
+    vertexShader: document.getElementById('vertexshader').textContent,
+    fragmentShader: document.getElementById('fragmentshader').textContent,
+    defines: {}
+  }), 'baseTexture'
+);
+finalPass.needsSwap = true;
+
+const finalComposer = new EffectComposer(renderer);
+finalComposer.addPass(renderPass);
+finalComposer.addPass(finalPass);
+
 composer.addPass(bloomPass)
 
-const gui = new GUI();
-const cubeFolder = gui.addFolder('Cube')
-cubeFolder.add(wireframe.rotation, 'x', 0, Math.PI * 2)
-cubeFolder.add(wireframe.rotation, 'y', 0, Math.PI * 2)
-cubeFolder.add(wireframe.rotation, 'z', 0, Math.PI * 2)
-cubeFolder.open()
+// const gui = new GUI();
+// const cubeFolder = gui.addFolder('Cube')
+// cubeFolder.add(wireframe.rotation, 'x', 0, Math.PI * 2)
+// cubeFolder.add(wireframe.rotation, 'y', 0, Math.PI * 2)
+// cubeFolder.add(wireframe.rotation, 'z', 0, Math.PI * 2)
+// cubeFolder.open()
+
+
+let lastUpdateTimestamp = millis()
+
+const pulse = () => {
+  objects.forEach(obj => obj.bloom = !obj.bloom)
+}
 
 const animate = () => {
   requestAnimationFrame(animate);
-  composer.render()
+
+  orbitControls.update()
+
+  objects.forEach(obj => {
+    if (!obj.bloom) {
+      obj.mesh.layers.disable(NORMAL_LAYER)
+    }
+  })
+  bloomComposer.render()
+
+  objects.forEach(obj => obj.mesh.layers.enable(NORMAL_LAYER))
+  finalComposer.render()
+
+  const now = millis()
+  if (now - lastUpdateTimestamp >= 1500) {
+    pulse()
+    lastUpdateTimestamp = now
+  }
+
 }
 
 animate();
