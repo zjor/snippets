@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import {GUI} from 'three/addons/libs/lil-gui.module.min.js';
+import { GUI } from 'dat.gui'
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
@@ -43,20 +43,26 @@ const addLight = (scene) => {
 const {scene, camera, renderer, orbitControls} = createScene();
 addLight(scene);
 
+const objectsProps = {
+  autoSwitch: true,
+  redBloom: true
+}
+
 const objects = [
   new BloomingGeometry(
     new THREE.SphereGeometry(0.5),
     new THREE.MeshPhongMaterial({color: 0xff0000}),
     {x: -1, y: 0, z: 0},
-    true
+    objectsProps.redBloom
   ),
   new BloomingGeometry(
     new THREE.SphereGeometry(0.5),
     new THREE.MeshPhongMaterial({color: 0x00ff00}),
     {x: 1, y: 0, z: 0},
-    false
+    !objectsProps.redBloom
   )
 ]
+
 
 objects.forEach(obj => scene.add(obj.mesh))
 
@@ -101,22 +107,32 @@ finalComposer.addPass(finalPass);
 
 composer.addPass(bloomPass)
 
-// const gui = new GUI();
-// const cubeFolder = gui.addFolder('Cube')
-// cubeFolder.add(wireframe.rotation, 'x', 0, Math.PI * 2)
-// cubeFolder.add(wireframe.rotation, 'y', 0, Math.PI * 2)
-// cubeFolder.add(wireframe.rotation, 'z', 0, Math.PI * 2)
-// cubeFolder.open()
+const gui = new GUI();
 
+const controlsFolder = gui.addFolder('Controls')
+controlsFolder.add(orbitControls, 'autoRotate').name('Auto-rotate')
+controlsFolder.open()
+
+const sceneFolder = gui.addFolder('Scene')
+sceneFolder.add(objectsProps, 'autoSwitch').name('Auto-switch')
+sceneFolder.add(objectsProps, 'redBloom').name('Toggle')
+  .listen()
+  .updateDisplay()
+sceneFolder.open()
 
 let lastUpdateTimestamp = millis()
 
 const pulse = () => {
-  objects.forEach(obj => obj.bloom = !obj.bloom)
+  if (objectsProps.autoSwitch) {
+    objectsProps.redBloom = !objectsProps.redBloom
+  }
 }
 
 const animate = () => {
   requestAnimationFrame(animate);
+
+  objects[0].bloom = objectsProps.redBloom
+  objects[1].bloom = !objectsProps.redBloom
 
   orbitControls.update()
 
