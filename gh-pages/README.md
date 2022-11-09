@@ -4,8 +4,9 @@
 - embed https://likebtn.com/en/ to the footer
 
 ## Ideas
-- triangles: change color each click
-- triangles: parallax & transparent blocks outside triangles & all white one red
+- triangles: 
+    - all white one red
+    - scale on sound beat
 - neon effect
 - pendulum/double pendulum & neon afterglow
 - 2D heat waves

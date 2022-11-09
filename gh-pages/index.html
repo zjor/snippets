@@ -13,11 +13,17 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+
     <link href="/dist/output.css" rel="stylesheet">
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
-<body>
-<div id="app" class="h-screen bg-slate-50">
+<body class="pb-48 bg-slate-50">
+<div id="app" class="h-screen">
     <div class="flex flex-row w-full h-16 bg-slate-400">
         <div class="h-16 flex items-center text-2xl pl-4">Programmable
             <span class="inline-block mx-1 px-2 py-1 skew-y-3 uppercase bg-slate-900 text-white">art</span>
@@ -34,15 +40,17 @@
     <div class="flex flex-row w-full">
         <div class="grow"></div>
         <div class="w-full lg:max-w-3xl md:max-w-2xl sm:max-w-xl">
-            <div class="pt-6 pb-2 pl-1 text-xl">Creative coding 2.0: homework</div>
-            <div class="w-full grid grid-cols-2 gap-1 md:grid-cols-3 md:gap-2 place-items-center">
-                <div v-for="item in items" class="relative group lg:w-60 md:w-50 rounded-xl shadow-lg hover:shadow-xl">
-                    <a :href="item.href">
-                        <img class="rounded-xl" :src="item.img" :alt="item.alt">
-                        <div class="absolute bottom-0 left-0 right-0 h-16 rounded-b-xl flex items-center justify-center transition-opacity ease-in-out duration-300 bg-slate-900 bg-opacity-50 opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                            <div class="bg-slate-50 px-4 py-1 rounded-full">{{ item.description }}</div>
-                        </div>
-                    </a>
+            <div v-for="section in sections">
+                <div class="pt-6 pb-2 pl-1 text-xl">{{section.title}}</div>
+                <div class="w-full grid grid-cols-2 gap-1 md:grid-cols-3 md:gap-2 place-items-center">
+                    <div v-for="item in section.items" class="relative group lg:w-60 md:w-50 rounded-xl shadow-lg hover:shadow-xl">
+                        <a :href="item.href">
+                            <img class="rounded-xl" :src="item.img" :alt="item.alt">
+                            <div class="absolute bottom-0 left-0 right-0 h-16 rounded-b-xl flex items-center justify-center transition-opacity ease-in-out duration-300 bg-slate-900 bg-opacity-50 opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                                <div class="bg-slate-50 px-4 py-1 rounded-full">{{ item.description }}</div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -51,7 +59,7 @@
 
 </div>
 
-<script src="/app.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>

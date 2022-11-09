@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+    "tailwind": "npx tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
+    "build": "cp src/app.js ./ && cp src/index.html ./"
   },
   "devDependencies": {
     "tailwindcss": "^3.1.8"
