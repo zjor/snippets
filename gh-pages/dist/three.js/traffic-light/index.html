@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name=viewport content="width=device-width,shrink-to-fit=0,user-scalable=no,minimum-scale=1,maximum-scale=1">
+    <link rel="shortcut icon" href="#"/>
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<script type="x-shader/x-vertex" id="vertexshader">
+varying vec2 vUv;
+void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+</script>
+
+<script type="x-shader/x-fragment" id="fragmentshader">
+uniform sampler2D baseTexture;
+uniform sampler2D bloomTexture;
+
+varying vec2 vUv;
+
+void main() {
+    gl_FragColor = ( texture2D( baseTexture, vUv ) + vec4( 1.0 ) * texture2D( bloomTexture, vUv ) );
+}
+</script>
+
+<script src="main.js"></script>
+</body>
+</html>

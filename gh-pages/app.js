@@ -49,6 +49,12 @@ createApp({
         img: `${URL_PREFIX}/images/threejs-selective-bloom-preview.png`,
         alt: 'three.js-selective-bloom-preview',
         description: '3js: Selective bloom'
+      },
+      {
+        href: `${URL_PREFIX}/dist/three.js/traffic-light/index.html`,
+        img: `${URL_PREFIX}/images/threejs-traffic-light-preview.png`,
+        alt: 'three.js-traffic-light-preview',
+        description: '3js: Traffic light'
       }
     ]
 
