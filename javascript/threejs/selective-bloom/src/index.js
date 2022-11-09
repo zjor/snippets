@@ -12,7 +12,6 @@ const log = console.log
 const millis = () => (new Date()).getTime()
 
 const NORMAL_LAYER = 0;
-const BLOOM_LAYER = 1;
 
 const createScene = () => {
   const scene = new THREE.Scene();
