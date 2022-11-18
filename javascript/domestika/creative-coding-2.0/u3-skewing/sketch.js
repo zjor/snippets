@@ -64,39 +64,6 @@ const drawStencil = ({g, x, y, r, sides, width, height, fillStyle}) => {
   g.fill()
 }
 
-const skewedRect = (g, {w = 600, h = 200, degrees = -15, fill, stroke, blend}) => {
-  const rx = Math.cos(degToRad(degrees)) * w
-  const ry = Math.sin(degToRad(degrees)) * w
-  g.fillStyle = fill;
-  g.strokeStyle = stroke;
-
-  g.save()
-  g.translate(-rx / 2, -(ry + h) / 2)
-  g.beginPath();
-  g.moveTo(0, 0);
-  g.lineTo(rx, ry)
-  g.lineTo(rx, ry + h)
-  g.lineTo(0, h)
-  g.closePath()
-
-  g.globalCompositeOperation = blend
-  g.fill()
-  const shadowColor = Color.offsetHSL(fill, 0, 0, -20)
-  shadowColor.rgba[3] = 0.5
-  g.shadowColor = Color.style(shadowColor.rgba)
-  g.shadowOffsetX = -10
-  g.shadowOffsetY = 20
-
-  g.shadowColor = null;
-  g.stroke()
-
-  g.globalCompositeOperation = 'source-over'
-  g.lineWidth = 2
-  g.strokeStyle = 'black'
-  g.stroke()
-  g.restore()
-}
-
 const settings = {
   dimensions: [1080, 1080],
   animate: true
@@ -128,7 +95,7 @@ const sketch = ({width, height}) => {
     rects.push(new Rect({...params, skewness: -15}))
   }
 
-  return ({context: g, width, height}) => {
+  return ({context: g, width, height, frame}) => {
     const {x, y, r, sides, lineWidth} = mask
 
     g.fillStyle = bgColor;
@@ -137,8 +104,9 @@ const sketch = ({width, height}) => {
     drawPolygon({context: g, x, y, r, sides})
     g.lineWidth = 20
 
-    rects.forEach(rect => {
-      rect.draw(g)
+    const scale = Math.cos(frame / 5) * 0.1 + 1;
+    rects.forEach((rect, index) => {
+      rect.draw(g, (index % 3 == 1) ? scale : 1.0)
       rect.advance()
       if (rect.hasEscaped(width)) {
         rect.regenerate()
@@ -189,21 +157,22 @@ class Rect {
     this.vy = s * v
   }
 
-  drawSkewedRect(g) {
+  drawSkewedRect(g, scale = 1) {
     g.fillStyle = this.fill;
     g.strokeStyle = this.stroke;
 
     g.save()
 
     const [c, s] = [Math.cos(degToRad(this.skewness)), Math.sin(degToRad(this.skewness))]
-    const [rx, ry] = [c * this.w, s * this.w]
+    const [rx, ry] = [c * this.w * scale, s * this.w * scale]
+    const h = this.h * scale
 
-    g.translate(-rx / 2, -(ry + this.h) / 2)
+    g.translate(-rx / 2, -(ry + h) / 2)
     g.beginPath();
     g.moveTo(0, 0);
     g.lineTo(rx, ry)
-    g.lineTo(rx, ry + this.h)
-    g.lineTo(0, this.h)
+    g.lineTo(rx, ry + h)
+    g.lineTo(0, h)
     g.closePath()
 
     g.globalCompositeOperation = this.blend
@@ -224,10 +193,10 @@ class Rect {
     g.restore()
   }
 
-  draw(context) {
+  draw(context, scale = 1) {
     context.save()
     context.translate(this.x, this.y)
-    this.drawSkewedRect(context)
+    this.drawSkewedRect(context, scale)
     context.restore()
   }
 
