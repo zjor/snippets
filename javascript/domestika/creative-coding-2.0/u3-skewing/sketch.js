@@ -243,9 +243,3 @@ class Rect {
   }
 
 }
-
-/*
-TODO:
-  - white & red version
-  - add sound, increase size on the beat
- */
