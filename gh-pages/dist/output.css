@@ -684,6 +684,10 @@ video {
   padding-right: 1rem;
 }
 
+.pb-48 {
+  padding-bottom: 12rem;
+}
+
 .pl-4 {
   padding-left: 1rem;
 }
@@ -698,10 +702,6 @@ video {
 
 .pl-1 {
   padding-left: 0.25rem;
-}
-
-.pb-48 {
-  padding-bottom: 12rem;
 }
 
 .text-2xl {

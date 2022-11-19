@@ -19,6 +19,12 @@ createApp({
         description: 'Skewing'
       },
       {
+        href: `${URL_PREFIX}/dist/cc2.0/u3/skewing-audio.html`,
+        img: `${URL_PREFIX}/images/skewing-audio-preview.png`,
+        alt: 'skewing-preview',
+        description: 'Skewing: Audio'
+      },
+      {
         href: `${URL_PREFIX}/dist/cc2.0/u4/curves-intro.html`,
         img: `${URL_PREFIX}/images/curves-intro-preview.png`,
         alt: 'curves-intro-preview',
