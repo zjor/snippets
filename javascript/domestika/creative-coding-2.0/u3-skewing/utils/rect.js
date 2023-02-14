@@ -106,7 +106,7 @@ class Rect {
     const fill = random.pick(rectColors)
     const stroke = random.pick(rectColors)
     const blend = random.pick(['overlay', 'source-over'])
-    const v = random.range(0.2, 1.2) * random.pick([-1, 1])
+    const v = random.range(0.3, 1.6) * random.pick([-1, 1])
     return {x, y, w, h, fill, stroke, blend, v, canvasWidth, canvasHeight, rectColors}
   }
 

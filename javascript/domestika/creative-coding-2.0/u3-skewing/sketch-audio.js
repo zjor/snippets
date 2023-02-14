@@ -12,8 +12,15 @@ let manager
 
 // audio source
 const bucketName = 'audio-c0253ca5'
-// const audioFilename = 'kokokaka-ring-the-bell-tony.mp3'
-const audioFilename = 'alt-j_tesselate.mp3'
+const songs = [
+  'clear-sky-hartzmann-main-version-02-20-18592.mp3',
+  'mornings-swoop-main-version-02-03-12897.mp3',
+  'summer-bumble-paul-yudin-main-version-18169-02-16.mp3',
+  'that-groove-soundroll-main-version-4342-03-04.mp3',
+  'trendsetter-mood-maze-main-version-02-53-1004.mp3'
+]
+
+const audioFilename = songs[0]
 
 const initAudio = () => {
   const audioSrc = `https://${bucketName}.s3.filebase.com/${audioFilename}`
