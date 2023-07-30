@@ -1,0 +1,11 @@
+Screen {
+    align: center middle;
+}
+
+Snowflakes {
+    border: greenyellow;
+    width: 22;
+    height: 20;
+    text-style: bold;
+    color: greenyellow;
+}
