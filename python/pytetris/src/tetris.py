@@ -56,9 +56,24 @@ class TetrisField(Static):
         else:
             raise Exception("Not withing the field")
 
+    def delete_completed_lines(self):
+        row = HEIGHT - 1
+        while row > 0:
+            completed = True
+            for cell in self.state[row]:
+                if cell == 0:
+                    completed = False
+                    break
+            if completed:
+                for i in reversed(range(1, row + 1)):
+                    self.state[i] = self.state[i - 1]
+            else:
+                row -= 1
+
     def lock_shape_and_get_next(self):
         mask = self.shape.render()
         self.state = merge_fields(self.state, mask)
+        self.delete_completed_lines()
         self.shape = shapes.get_random_shape()
 
     def on_key(self, event: events.Key):
