@@ -1,12 +1,10 @@
-import random
-
 from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Static
 
 import shapes
-from shapes import Shape, Move
 from settings import WIDTH, HEIGHT
+from shapes import Move
 
 
 def merge_fields(dst: list[list[int]], src: list[list[int]]) -> list[list[int]]:
@@ -18,6 +16,14 @@ def merge_fields(dst: list[list[int]], src: list[list[int]]) -> list[list[int]]:
             else:
                 result[row][col] = dst[row][col]
     return result
+
+
+def overlaps(one: list[list[int]], two: list[list[int]]) -> bool:
+    for row in range(HEIGHT):
+        for col in range(WIDTH):
+            if one[row][col] > 0 and two[row][col] > 0:
+                return True
+    return False
 
 
 class TetrisField(Static):
@@ -35,7 +41,7 @@ class TetrisField(Static):
 
     def tick(self):
         next_shape = self.shape.move(Move.DOWN)
-        if next_shape.is_within_field():
+        if next_shape.is_within_field() and not overlaps(self.state, next_shape.render()):
             self.shape = next_shape
             self.render_field()
         else:
@@ -70,7 +76,7 @@ class TetrisField(Static):
             next_shape = self.shape.move(Move.DOWN)
             last_move_is_down = True
 
-        if next_shape.is_within_field():
+        if next_shape.is_within_field() and not overlaps(self.state, next_shape.render()):
             self.shape = next_shape
             self.render_field()
         else:
