@@ -1,5 +1,7 @@
-from textual import events
+from textual import events, on
 from textual.app import App, ComposeResult
+from textual.message import Message
+from textual.screen import Screen, ModalScreen
 from textual.widgets import Static
 
 import shapes
@@ -32,6 +34,13 @@ class TetrisField(Static):
         self.state: list[list[int]] = []
         self.shape = shapes.get_random_shape()
         self.reset_state()
+        self.started = True
+
+    def restart_game(self, dummy: bool):
+        self.reset_state()
+        self.shape = shapes.get_random_shape()
+        self.started = True
+        self.render_field()
 
     def reset_state(self):
         self.state = [[0] * WIDTH for _ in range(HEIGHT)]
@@ -40,6 +49,9 @@ class TetrisField(Static):
         self.set_interval(0.5, self.tick)
 
     def tick(self):
+        if not self.started:
+            return
+
         next_shape = self.shape.move(Move.DOWN)
         if next_shape.is_within_field() and not overlaps(self.state, next_shape.render()):
             self.shape = next_shape
@@ -76,6 +88,10 @@ class TetrisField(Static):
         self.delete_completed_lines()
         self.shape = shapes.get_random_shape()
 
+        if self.started and overlaps(self.state, self.shape.render()):
+            self.started = False
+            self.app.push_screen("game_over", self.restart_game)
+
     def on_key(self, event: events.Key):
         next_shape = self.shape
         last_move_is_down = False
@@ -90,6 +106,8 @@ class TetrisField(Static):
         elif event.key == 'l':
             next_shape = self.shape.move(Move.DOWN)
             last_move_is_down = True
+        else:
+            return
 
         if next_shape.is_within_field() and not overlaps(self.state, next_shape.render()):
             self.shape = next_shape
@@ -101,8 +119,29 @@ class TetrisField(Static):
                 self.app.bell()
 
 
+class WelcomeScreen(Screen):
+    BINDINGS = [("space", "app.pop_screen", "Pop screen")]
+
+    def compose(self) -> ComposeResult:
+        yield Static("Welcome to PyTetris!\n\nPress SPACE to start the game")
+
+
+class GameOverScreen(ModalScreen[bool]):
+
+    def compose(self) -> ComposeResult:
+        yield Static("Game over!\n\nPress SPACE to start again")
+
+    def on_key(self, event: events.Key):
+        if event.key == 'space':
+            self.dismiss(True)
+
+
 class TetrisApp(App):
     CSS_PATH = "style.css"
+    SCREENS = {
+        "welcome": WelcomeScreen(),
+        "game_over": GameOverScreen()
+    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
