@@ -12,7 +12,11 @@ from settings import WIDTH, HEIGHT
 class TetrisField(Static):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.shape = Shape(shapes.LA_MASKS)
+        self.state: list[list[int]] = []
+        self.shape = Shape(shapes.ROD_MASKS)
+
+    def reset_state(self):
+        self.state = [[0] * WIDTH for _ in range(HEIGHT)]
 
     def on_mount(self):
         self.set_interval(0.5, self.tick)
@@ -23,7 +27,7 @@ class TetrisField(Static):
             self.shape = next_shape
             self.render_field()
         else:
-            self.freeze_shape()
+            self.lock_shape()
 
     def render_field(self):
         if self.shape.is_within_field():
@@ -33,7 +37,7 @@ class TetrisField(Static):
         else:
             raise Exception("Not withing the field")
 
-    def freeze_shape(self):
+    def lock_shape(self):
         pass
 
     def on_key(self, event: events.Key):
@@ -56,7 +60,7 @@ class TetrisField(Static):
             self.render_field()
         else:
             if last_move_is_down:
-                self.freeze_shape()
+                self.lock_shape()
             else:
                 self.app.bell()
 

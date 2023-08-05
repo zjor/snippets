@@ -26,7 +26,8 @@ class Shape:
         mask = self._get_mask()
         for (i, row) in enumerate(mask):
             for (j, cell) in enumerate(row):
-                field[self.y + i][self.x + j + Shape.X_OFFSET] = cell
+                if cell == 1:
+                    field[self.y + i][self.x + j + Shape.X_OFFSET] = 1
         return field
 
     def is_within_field(self) -> bool:
@@ -101,6 +102,93 @@ LA_MASKS = [
     ]
 ]
 
+LB_MASKS = [
+    [
+        [0, 0, 0],
+        [1, 1, 1],
+        [0, 0, 1]
+    ],
+    [
+        [0, 1, 1],
+        [0, 1, 0],
+        [0, 1, 0]
+    ],
+    [
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+    ],
+    [
+        [0, 1, 0],
+        [0, 1, 0],
+        [1, 1, 0]
+    ]
+]
+
+SA_MASKS = [
+    [
+        [1, 1, 0],
+        [0, 1, 1],
+        [0, 0, 0]
+    ],
+    [
+        [0, 1, 0],
+        [1, 1, 0],
+        [1, 0, 0]
+    ]
+]
+
+SB_MASKS = [
+    [
+        [0, 1, 1],
+        [1, 1, 0],
+        [0, 0, 0]
+    ],
+    [
+        [1, 0, 0],
+        [1, 1, 0],
+        [0, 1, 0]
+    ]
+]
+
+T_MASKS = [
+    [
+        [0, 1, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+    ],
+    [
+        [0, 1, 0],
+        [1, 1, 0],
+        [0, 1, 0]
+    ],
+    [
+        [0, 0, 0],
+        [1, 1, 1],
+        [0, 1, 0]
+    ],
+    [
+        [0, 1, 0],
+        [0, 1, 1],
+        [0, 1, 0]
+    ]
+]
+
+ROD_MASKS = [
+    [
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0]
+    ],
+    [
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+    ]
+]
+
 
 def _print_field(field: list[list[int]]) -> None:
     for row in field:
@@ -108,15 +196,13 @@ def _print_field(field: list[list[int]]) -> None:
 
 
 def main():
-    shape = Shape(BLOCK_MASKS, y=HEIGHT - 1)
+    shape = Shape(LA_MASKS, y=HEIGHT - 2, rotation=2)
     shape = shape.move(Move.RIGHT)
 
     print(shape.is_within_field())
 
     field = shape.render()
     _print_field(field)
-
-
 
 
 if __name__ == "__main__":
