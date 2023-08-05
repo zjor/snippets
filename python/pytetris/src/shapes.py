@@ -1,3 +1,4 @@
+import random
 from enum import Enum
 from typing import Self
 
@@ -188,6 +189,23 @@ ROD_MASKS = [
         [0, 0, 0, 0]
     ]
 ]
+
+ALL_MASKS = [
+    BLOCK_MASKS,
+    LA_MASKS,
+    LB_MASKS,
+    SA_MASKS,
+    SB_MASKS,
+    T_MASKS,
+    ROD_MASKS
+]
+
+
+def get_random_shape() -> Shape:
+    index = random.randint(0, len(ALL_MASKS) - 1)
+    rotations_count = len(ALL_MASKS[index])
+    rotation = random.randint(0, rotations_count - 1)
+    return Shape(ALL_MASKS[index], rotation=rotation)
 
 
 def _print_field(field: list[list[int]]) -> None:
