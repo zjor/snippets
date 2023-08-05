@@ -13,7 +13,7 @@ class TetrisField(Static):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.state: list[list[int]] = []
-        self.shape = Shape(shapes.ROD_MASKS)
+        self.shape = Shape(shapes.T_MASKS)
 
     def reset_state(self):
         self.state = [[0] * WIDTH for _ in range(HEIGHT)]
