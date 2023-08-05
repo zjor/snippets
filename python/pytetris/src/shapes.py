@@ -1,98 +1,123 @@
 from enum import Enum
+from typing import Self
 
-TEMPLATES = [
+from settings import WIDTH, HEIGHT
+
+
+class Move(Enum):
+    LEFT = 0
+    RIGHT = 1
+    DOWN = 2
+    ROTATE_CW = 3
+    ROTATE_CCW = 4
+
+
+class Shape:
+    X_OFFSET = WIDTH // 2 - 1
+
+    def __init__(self, masks: list[list[list[int]]], x: int = 0, y: int = 0, rotation: int = 0):
+        self._masks = masks
+        self.x = x
+        self.y = y
+        self.rotation = rotation
+
+    def render(self) -> list[list[int]]:
+        field: list[list[int]] = [[0] * WIDTH for _ in range(HEIGHT)]
+        mask = self._get_mask()
+        for (i, row) in enumerate(mask):
+            for (j, cell) in enumerate(row):
+                field[self.y + i][self.x + j + Shape.X_OFFSET] = cell
+        return field
+
+    def is_within_field(self) -> bool:
+        # a field WIDTH x HEIGHT surrounded by 2 layers of ones
+        field = [[0] * (WIDTH + 4) for _ in range(HEIGHT + 4)]
+
+        # cap of ones
+        for i in range(WIDTH + 4):
+            field[0][i] = 1
+            field[1][i] = 1
+            field[-1][i] = 1
+            field[-2][i] = 1
+
+        for i in range(HEIGHT + 4):
+            field[i][0] = 1
+            field[i][1] = 1
+            field[i][-1] = 1
+            field[i][-2] = 1
+
+        dx, dy = 2, 2
+
+        mask = self._get_mask()
+        for (i, row) in enumerate(mask):
+            for (j, cell) in enumerate(row):
+                if cell == 1:
+                    if field[self.y + i + dy][self.x + j + Shape.X_OFFSET + dx] == 1:
+                        return False
+        return True
+
+    def move(self, m: Move) -> Self:
+        match m:
+            case Move.LEFT:
+                return Shape(self._masks, self.x - 1, self.y, self.rotation)
+            case Move.RIGHT:
+                return Shape(self._masks, self.x + 1, self.y, self.rotation)
+            case Move.DOWN:
+                return Shape(self._masks, self.x, self.y + 1, self.rotation)
+            case Move.ROTATE_CW:
+                return Shape(self._masks, self.x, self.y, self.rotation - 1)
+            case Move.ROTATE_CCW:
+                return Shape(self._masks, self.x, self.y, self.rotation + 1)
+
+    def _get_mask(self) -> list[list[int]]:
+        return self._masks[self.rotation % len(self._masks)]
+
+
+BLOCK_MASKS = [[
+    [1, 1],
+    [1, 1]
+]]
+
+LA_MASKS = [
     [
-        [1, 1],
-        [1, 1]
+        [0, 0, 0],
+        [1, 1, 1],
+        [1, 0, 0]
     ],
     [
-        [1, 1],
-        [1, 0],
-        [1, 0]
-    ],
-    [
-        [1, 1],
-        [0, 1],
-        [0, 1]
-    ],
-    [
-        [0, 1, 1],
-        [1, 1, 0]
-    ],
-    [
-        [1, 1, 0],
+        [0, 1, 0],
+        [0, 1, 0],
         [0, 1, 1]
     ],
     [
-        [1, 1, 1, 1]
+        [0, 0, 1],
+        [1, 1, 1],
+        [0, 0, 0]
     ],
     [
-        [1, 1, 1],
+        [1, 1, 0],
+        [0, 1, 0],
         [0, 1, 0]
     ]
 ]
 
 
-class Move(Enum):
-    LEFT = 1
-    RIGHT = 2
-    ROT_CW = 3
-    ROT_CCW = 4
-    UP = 5
-    DOWN = 6
+def _print_field(field: list[list[int]]) -> None:
+    for row in field:
+        print(row)
 
 
-class Shape:
-    def __init__(self, template: list[list[int]], rotation: int):
-        self.template: list[list[int]] = template
-        self.rotation: int = rotation
-        self.x = 0
-        self.y = 0
-        self.w = len(template[0])
-        self.h = len(template)
+def main():
+    shape = Shape(BLOCK_MASKS, y=HEIGHT - 1)
+    shape = shape.move(Move.RIGHT)
 
-    def rotate(self) -> None:
-        # TODO: impl rotation
-        self.w = len(self.template[0])
-        self.h = len(self.template)
+    print(shape.is_within_field())
 
-    def move(self, m: Move):
-        if m == Move.LEFT:
-            self.x -= 1
-        elif m == Move.RIGHT:
-            self.x += 1
-        elif m == Move.UP:
-            self.y -= 1
-        elif m == Move.DOWN:
-            self.y += 1
-        elif m == Move.ROT_CW:
-            pass
-        elif m == Move.ROT_CCW:
-            pass
-        else:
-            raise ValueError(f"Unsupported move: {m}")
+    field = shape.render()
+    _print_field(field)
 
-    def is_within_bounds(self, width: int, height: int) -> bool:
-        x_offset = width // 2 - 1
-        if self.x + x_offset < 0 or self.y < 0:
-            return False
-        elif self.x + x_offset + self.w > width or self.y + self.h > height:
-            return False
-        else:
-            return True
 
-    def render(self, width: int, height: int) -> list[list[int]]:
-        if not self.is_within_bounds(width, height):
-            raise ValueError("Shape is outside the field")
 
-        m = []
-        for i in range(height):
-            m.append([0] * width)
 
-        x, y = self.x, self.y
-        x += width // 2 - 1
-
-        for i, row in enumerate(self.template):
-            for j, cell in enumerate(self.template[i]):
-                m[y + i][x + j] = cell
-        return m
+if __name__ == "__main__":
+    main()

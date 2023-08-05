@@ -2,10 +2,10 @@ Screen {
     align: center middle;
 }
 
-Snowflakes {
+TetrisField {
     border: greenyellow;
     width: 22;
-    height: 20;
+    height: 22;
     text-style: bold;
     color: greenyellow;
 }
