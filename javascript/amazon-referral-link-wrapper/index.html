@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amazon link maker</title>
+
+    <meta name="description" content="Makes a referral link fo any product on Amazon. Paste product URL and get the referral link." />
+    <meta name="keywords" content="amazon, referral, affiliate" />
+    <meta name="robots" content="index, no-follow" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <input id="product-url" placeholder="Paste a product URL from Amazon">
+    <div id="referral-url-container">
+        URL will appear here
+    </div>
+</div>
+<script>
+  function getProductId(url) {
+    const REs = [
+      /dp\/([A-Za-z0-9]{10})/,
+      /gp\/([A-Za-z0-9]{10})/,
+      /product\/([A-Za-z0-9]{10})/
+    ]
+
+    for (const re of REs) {
+      const match = re.exec(url)
+      if (match) {
+        return match[1]
+      }
+    }
+
+    return null
+  }
+
+  const referralId = "qrshare05-20"
+
+  const urlInput = document.querySelector('#product-url')
+  const refUrlDiv = document.querySelector('#referral-url-container')
+
+  urlInput.addEventListener("change", e => {
+    console.log(e.target.value)
+    const productId = getProductId(e.target.value)
+    if (productId) {
+      const refUrl = `http://www.amazon.com/dp/${productId}/ref=nosim?tag=${referralId}`;
+      refUrlDiv.innerHTML = `<a href="${refUrl}">${refUrl}</a>`
+    }
+  })
+
+</script>
+</body>
+</html>
