@@ -52,7 +52,7 @@
     console.log(e.target.value)
     const productId = getProductId(e.target.value)
     if (productId) {
-      const refUrl = `http://www.amazon.com/dp/${productId}/ref=nosim?tag=${referralId}`;
+      const refUrl = `https://www.amazon.com/dp/${productId}/ref=nosim?tag=${referralId}`;
       refUrlDiv.innerHTML = `<a href="${refUrl}">${refUrl}</a>`
     }
   })
