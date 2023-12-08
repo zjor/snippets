@@ -5,6 +5,15 @@ const {createApp} = Vue
 createApp({
   data() {
 
+    const sketchItems = [
+      {
+        href: `${URL_PREFIX}/dist/sketches/octopus.html`,
+        img: `${URL_PREFIX}/images/energy-octopus-preview.png`,
+        alt: 'energy-octopus-preview',
+        description: 'Energy Octopus'
+      },
+    ]
+
     const ccItems = [
       {
         href: `${URL_PREFIX}/dist/cc2.0/u2/rosetta-orbit.html`,
@@ -66,6 +75,10 @@ createApp({
 
     return {
       sections: [
+        {
+          title: 'Sketches',
+          items: sketchItems
+        },
         {
           title: 'Creative coding 2.0: homework',
           items: ccItems

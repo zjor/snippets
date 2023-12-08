@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "canvas-sketch-cli sketch.js"
+    "dev": "canvas-sketch-cli sketch.js",
+    "build": "canvas-sketch sketch.js --name index --build --inline"
   },
   "keywords": [],
   "author": "",

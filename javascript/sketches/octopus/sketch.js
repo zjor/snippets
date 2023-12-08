@@ -33,9 +33,7 @@ const Point = (x, y) => {
       _y = v
     },
     distance: _distance,
-    length: () => {
-      return _distance(0, 0)
-    }
+    length: () => _distance(0, 0)
   }
 }
 
@@ -138,8 +136,12 @@ const octo = Octopus(
   Point(0, 0),
   Point(0, 0),
   {
-    get x() {return dot.x},
-    get y() {return dot.y}
+    get x() {
+      return dot.x
+    },
+    get y() {
+      return dot.y
+    }
   },
   20
 )
