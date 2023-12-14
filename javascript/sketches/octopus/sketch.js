@@ -247,3 +247,5 @@ window.addEventListener('keydown', e => {
     paused = !paused
   }
 })
+
+window.addEventListener('click', _ => paused = !paused)
