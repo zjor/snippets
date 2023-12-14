@@ -249,3 +249,8 @@ window.addEventListener('keydown', e => {
 })
 
 window.addEventListener('click', _ => paused = !paused)
+
+// TODO: remove old Dot => replace with another instance
+// TODO: add bezier legs
+// TODO: add "body direction"
+// TODO: change body size ~ velocity
