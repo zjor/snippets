@@ -5,7 +5,8 @@ const settings = {
   animate: true
 }
 
-const PRIMARY_COLOR = '#adedfd'
+const PRIMARY_COLOR = 'rgb(173, 237, 253)'
+const PRIMARY_COLOR_05 = 'rgba(173, 237, 253, 0.5)'
 
 let paused = true
 let t = 0
@@ -47,24 +48,58 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
   const b = 25
   const x0 = 150
 
+  let connectedStars = []
+
   const _drawRays = (c) => {
     const starsWithDistances = []
-    stars.forEach(({x, y}) => {
+    stars.forEach(({id, x, y}) => {
       starsWithDistances.push({
-        x, y, d: _p.distance(x, y)
+        id, x, y, d: _p.distance(x, y)
       })
     })
-    c.setLineDash([])
-    starsWithDistances
+
+    const newStars = starsWithDistances
       .sort((a, b) => a.d - b.d)
       .slice(0, raysCount)
-      .forEach(({x, y}) => {
-        c.beginPath()
-        c.moveTo(_p.x, _p.y)
-        c.lineTo(x, y)
-        c.strokeStyle = PRIMARY_COLOR
-        c.stroke()
-      })
+    const newIds = new Set(newStars.map(s => s.id))
+    connectedStars = connectedStars.filter(s => newIds.has(s.id))
+
+    const oldIds = new Set(connectedStars.map(s => s.id))
+    newStars.forEach(s => {
+      if (!oldIds.has(s.id)) {
+        connectedStars.push({
+          ...s,
+          cp: Point(
+            (Math.random() - 0.5) * 300 + _p.x,
+            (Math.random() - 0.5) * 300 + _p.y
+          )
+        })
+      }
+    })
+
+    c.setLineDash([])
+    const alpha = 0.4
+    c.lineWidth = 2.5
+
+    connectedStars.forEach(s => {
+      c.strokeStyle = PRIMARY_COLOR_05
+      c.beginPath()
+      c.moveTo(_p.x, _p.y)
+      c.bezierCurveTo(
+        s.cp.x,
+        s.cp.y,
+        alpha * _p.x + (1 - alpha) * s.x,
+        alpha * _p.y + (1 - alpha) * s.y,
+        s.x, s.y)
+      c.stroke()
+
+      c.fillStyle = PRIMARY_COLOR
+      c.beginPath()
+      c.ellipse(s.x, s.y, 2, 2, 0, 0, 2 * Math.PI)
+      c.fill()
+
+    })
+
   }
 
   return {
@@ -89,8 +124,8 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
       _drawRays(c)
 
       c.beginPath()
-      const r = 25
-      c.fillStyle = `rgb(${r * 5}, 255, ${r * 3})`
+      const r = 15 + _v.length() / 25
+      c.fillStyle = PRIMARY_COLOR
       c.ellipse(_p.x, _p.y, r, r, 0, 0, 2 * Math.PI)
       c.fill()
     }
@@ -99,56 +134,34 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
 
 const cursor = Point(0, 0)
 
-const dot = {
-  x: 0,
-  y: 0,
-  vx: 0,
-  vy: 0,
-  ax: 0,
-  ay: 0,
-  distance(x, y) {
-    return Math.sqrt((this.x - x) ** 2 + (this.y - y) ** 2)
-  },
-  velocity() {
-    return Math.sqrt(this.vx * this.vx + this.vy * this.vy)
-  },
-  integrate(dt) {
-    const k = 75
-    const b = 25
-    const x0 = 150
-    const d = this.distance(cursor.x, cursor.y)
-    const f = k * (d - x0)
-    const sin = (cursor.y - this.y) / d
-    const cos = (cursor.x - this.x) / d
-    this.ax = f * cos - b * this.vx
-    this.ay = f * sin - b * this.vy
+const octopusPrime = Octopus(
+  Point(540, 540),
+  Point(0, 0),
+  Point(0, 0),
+  cursor,
+  30
+)
 
-    this.vx += this.ax * dt
-    this.vy += this.ay * dt
-
-    this.x += this.vx * dt
-    this.y += this.vy * dt
-  }
-}
-
-const octo = Octopus(
+const octoAlice = Octopus(
   Point(800, 100),
   Point(0, 0),
   Point(0, 0),
-  {
-    get x() {
-      return dot.x
-    },
-    get y() {
-      return dot.y
-    }
-  },
-  20
+  octopusPrime.position,
+  35
+)
+
+const octoBob = Octopus(
+  Point(800, 800),
+  Point(0, 0),
+  Point(0, 0),
+  octoAlice.position,
+  25
 )
 
 const initStars = (n = 50) => {
   for (let i = 0; i < n; i++) {
     stars.push({
+      id: i,
       x: Math.random() * 1080,
       y: Math.random() * 1080,
     })
@@ -156,50 +169,19 @@ const initStars = (n = 50) => {
 }
 
 const drawStars = (c) => {
-  c.fillStyle = PRIMARY_COLOR
+  c.fillStyle = PRIMARY_COLOR_05
   stars.forEach(star => {
     c.beginPath()
-    c.ellipse(star.x, star.y, 3, 3, 0, 0, 2 * Math.PI)
+    c.ellipse(star.x, star.y, 2, 2, 0, 0, 2 * Math.PI)
     c.fill()
   })
 }
 
-const drawRays = (c, n = 5) => {
-  const starsWithDistances = []
-  stars.forEach(({x, y}) => {
-    starsWithDistances.push({
-      x, y, d: dot.distance(x, y)
-    })
-  })
-  c.setLineDash([])
-  starsWithDistances
-    .sort((a, b) => a.d - b.d)
-    .slice(0, n)
-    .forEach(({x, y}) => {
-      c.beginPath()
-      c.moveTo(dot.x, dot.y)
-      c.lineTo(x, y)
-      c.strokeStyle = PRIMARY_COLOR
-      c.stroke()
-    })
-}
-
-const drawDot = (c) => {
-  c.beginPath()
-  const r = 25
-  c.fillStyle = `rgb(255, ${r * 5}, ${r * 3})`
-  c.ellipse(dot.x, dot.y, r, r, 0, 0, 2 * Math.PI)
-
-  c.fill()
-}
-
 const sketch = ({canvas}) => {
-  dot.x = canvas.width / 2
-  dot.y = canvas.height / 2
   canvas.addEventListener('mousemove', onMouseMove(canvas))
   t = Date.now()
 
-  initStars(100)
+  initStars(400)
 
   return ({context: c, width, height}) => {
     const now = Date.now()
@@ -208,24 +190,16 @@ const sketch = ({canvas}) => {
 
     c.fillRect(0, 0, width, height)
 
-    c.beginPath()
-    c.moveTo(cursor.x, cursor.y)
-    c.lineTo(dot.x, dot.y)
-    c.strokeStyle = PRIMARY_COLOR
-    c.lineWidth = 2
-    c.setLineDash([15, 15])
-    c.stroke()
-
     drawStars(c)
-    drawRays(c, 7)
 
-    drawDot(c)
-
-    octo.draw(c)
+    octopusPrime.draw(c)
+    octoAlice.draw(c)
+    octoBob.draw(c)
 
     if (!paused) {
-      dot.integrate(dt)
-      octo.integrate(dt)
+      octopusPrime.integrate(dt)
+      octoAlice.integrate(dt)
+      octoBob.integrate(dt)
     }
 
   }
@@ -250,7 +224,4 @@ window.addEventListener('keydown', e => {
 
 window.addEventListener('click', _ => paused = !paused)
 
-// TODO: remove old Dot => replace with another instance
 // TODO: add bezier legs
-// TODO: add "body direction"
-// TODO: change body size ~ velocity
