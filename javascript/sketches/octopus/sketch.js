@@ -4,6 +4,16 @@ const settings = {
   dimensions: [1080, 1080],
   animate: true
 }
+/*
+  Neon color palette
+  #12B8FF, #01DC03, #FFE62D, #FD4499, #DF19FB
+ */
+
+const BLUE = '#12B8FF'
+const GREEN = '#01DC03'
+const YELLOW = '#FFE62D'
+const ROSE = '#FD4499'
+const PINK = '#DF19FB'
 
 const PRIMARY_COLOR = 'rgb(173, 237, 253)'
 const PRIMARY_COLOR_05 = 'rgba(173, 237, 253, 0.5)'
@@ -38,7 +48,48 @@ const Point = (x, y) => {
   }
 }
 
-const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
+const getOrigin = () => Point(0, 0)
+
+const OctopusSwarm = () => {
+  const items = []
+
+  let idSeq = 0
+  const nextId = () => ++idSeq
+
+  return {
+    create(position, target, raysCount = 5, minDistance = 150, color = BLUE) {
+      const instance = Octopus(
+        position,
+        getOrigin(), getOrigin(),
+        target, raysCount, nextId(),
+        minDistance, color)
+      items.push(instance)
+      return instance
+    },
+    draw(c) {
+      items.forEach(item => item.draw(c))
+    },
+    integrate(dt) {
+      items.forEach(item => item.integrate(dt))
+    },
+    get items() {
+      return items
+    }
+  }
+}
+
+const swarm = OctopusSwarm()
+
+const Octopus = (
+  position,
+  velocity,
+  acceleration,
+  target,
+  raysCount = 5,
+  id = 0,
+  minDistance = 150,
+  color = BLUE) => {
+  const _id = id
   const _p = position
   const _v = velocity
   const _a = acceleration
@@ -46,9 +97,25 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
 
   const k = 75
   const b = 25
-  const x0 = 150
+  const x0 = minDistance
 
   let connectedStars = []
+
+  const addRepulsionInsideSwarm = () => {
+    const k = 300000000.0
+    for (let item of swarm.items) {
+      if (_id == item.id) {
+        continue
+      }
+      const {x: px, y: py} = item.position
+      const d = _p.distance(px, py)
+      const f = - 0.5 * k / d ** 2
+      const sin = (py - _p.y) / d
+      const cos = (px - _p.x) / d
+      _a.x += f * cos
+      _a.y += f * sin
+    }
+  }
 
   const _drawRays = (c) => {
     const starsWithDistances = []
@@ -82,7 +149,7 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
     c.lineWidth = 2.5
 
     connectedStars.forEach(s => {
-      c.strokeStyle = PRIMARY_COLOR_05
+      c.strokeStyle = color
       c.beginPath()
       c.moveTo(_p.x, _p.y)
       c.bezierCurveTo(
@@ -91,11 +158,13 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
         alpha * _p.x + (1 - alpha) * s.x,
         alpha * _p.y + (1 - alpha) * s.y,
         s.x, s.y)
+      c.globalAlpha = 0.5
       c.stroke()
 
-      c.fillStyle = PRIMARY_COLOR
+      c.fillStyle = color
       c.beginPath()
       c.ellipse(s.x, s.y, 2, 2, 0, 0, 2 * Math.PI)
+      c.globalAlpha = 1.0
       c.fill()
 
     })
@@ -103,6 +172,9 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
   }
 
   return {
+    get id() {
+      return _id
+    },
     get position() {
       return _p
     },
@@ -113,6 +185,8 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
       const cos = (_t.x - _p.x) / d
       _a.x = f * cos - b * _v.x
       _a.y = f * sin - b * _v.y
+
+      addRepulsionInsideSwarm()
 
       _v.x += _a.x * dt
       _v.y += _a.y * dt
@@ -125,7 +199,8 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
 
       c.beginPath()
       const r = 15 + _v.length() / 25
-      c.fillStyle = PRIMARY_COLOR
+      c.fillStyle = color
+      c.fillOpacity = 1.0
       c.ellipse(_p.x, _p.y, r, r, 0, 0, 2 * Math.PI)
       c.fill()
     }
@@ -134,29 +209,42 @@ const Octopus = (position, velocity, acceleration, target, raysCount = 5) => {
 
 const cursor = Point(0, 0)
 
-const octopusPrime = Octopus(
+const octopusPrime = swarm.create(
   Point(540, 540),
-  Point(0, 0),
-  Point(0, 0),
   cursor,
-  30
+  30,
+  0,
+  YELLOW
 )
 
-const octoAlice = Octopus(
+const octoAlice = swarm.create(
   Point(800, 100),
-  Point(0, 0),
-  Point(0, 0),
   octopusPrime.position,
-  35
+  35, 150,
+  BLUE
 )
 
-const octoBob = Octopus(
+const octoBob = swarm.create(
   Point(800, 800),
-  Point(0, 0),
-  Point(0, 0),
-  octoAlice.position,
-  25
+  octopusPrime.position,
+  25, 150,
+  GREEN
 )
+
+const octoCarol = swarm.create(
+  Point(100, 100),
+  octoAlice.position,
+  25, 150,
+  PINK
+)
+
+const octoDerek = swarm.create(
+  Point(150, 800),
+  octoBob.position,
+  25, 150,
+  ROSE
+)
+
 
 const initStars = (n = 50) => {
   for (let i = 0; i < n; i++) {
@@ -192,16 +280,11 @@ const sketch = ({canvas}) => {
 
     drawStars(c)
 
-    octopusPrime.draw(c)
-    octoAlice.draw(c)
-    octoBob.draw(c)
+    swarm.draw(c)
 
     if (!paused) {
-      octopusPrime.integrate(dt)
-      octoAlice.integrate(dt)
-      octoBob.integrate(dt)
+      swarm.integrate(dt)
     }
-
   }
 }
 
