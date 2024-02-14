@@ -1,5 +1,13 @@
 const canvas = document.querySelector('#canvas')
 const ctx = canvas.getContext('2d')
+const fontJura = new FontFace('Jura-Regular', 'url(/fonts/Jura-Regular.ttf)')
+
+let fontFamily = 'monospace'
+
+fontJura.load().then(font => {
+  document.fonts.add(font);
+  fontFamily = 'Jura-Regular'
+})
 
 const M_2PI = Math.PI * 2
 
@@ -52,6 +60,8 @@ function render(time) {
   ring2.draw(ctx, t)
   ring3.draw(ctx, t)
 
+  drawHeader('Polar H10+ 0xae83ff00323de')
+
   requestAnimationFrame(render)
 }
 
@@ -68,14 +78,43 @@ function drawCircle(x, y, r, lineWidth, color, shadowBlur = 0) {
   ctx.shadowBlur = 0
 }
 
-function drawText(x, y, text, size, color) {
+function drawText(x, y, text, size, color, center = true) {
   ctx.fillStyle = color
-  ctx.font = `normal ${size}px monospace`
-  let m = ctx.measureText(text)
+  ctx.font = `${size}px ${fontFamily}`
   ctx.shadowColor = color
   ctx.shadowBlur = 25
-  ctx.fillText(text, x - m.width / 2, y)
+  if (center) {
+    let m = ctx.measureText(text)
+    ctx.fillText(text, x - m.width / 2, y)
+  } else {
+    ctx.fillText(text, x, y)
+  }
   ctx.shadowBlur = 0
+}
+
+function drawHeader(text) {
+  const padding = 43
+  ctx.beginPath()
+  ctx.moveTo(width, padding)
+  ctx.lineTo(76, padding)
+  ctx.lineTo(60, padding + 26 * 16 / 17)
+  ctx.lineTo(60, padding + 42)
+  ctx.lineWidth = 3
+  ctx.strokeStyle = primaryBlueColor
+  ctx.stroke()
+
+  ctx.beginPath()
+  ctx.moveTo(50, padding)
+  ctx.lineTo(50 + 17, padding)
+  ctx.lineTo(50, padding + 26)
+  ctx.closePath()
+  ctx.fillStyle = primaryBlueColor
+  ctx.fill()
+
+  const fontSize = 48
+  ctx.fillStyle = textColor
+  ctx.font = `${fontSize}px ${fontFamily}`
+  ctx.fillText(text, 80, padding + fontSize + 12)
 }
 
 function getAmp(t, tau, period) {
