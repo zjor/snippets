@@ -1,3 +1,8 @@
+@font-face {
+  font-family: Jura-Ragular;
+  src: url('/fonts/Jura-Regular.ttf');
+}
+
 html, body, div, canvas {
   margin: 0;
   padding: 0;
@@ -6,11 +11,39 @@ html, body, div, canvas {
 #root {
   width: 100%;
   height: 100vh;
+  position: relative;
 }
 
 #canvas {
   width: 100%;
   height: 100%;
   display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
 }
 
+footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  background: linear-gradient(0deg, #0c2c3e, rgba(4, 7, 10, 0.2));
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 32px;
+  box-sizing: border-box;
+  font-family: 'Jura-Ragular';
+}
+
+footer div {
+  color: white;
+}
+
+footer div:first-child {
+  text-transform: uppercase;
+}

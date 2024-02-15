@@ -20,7 +20,7 @@ const resizeObserver = new ResizeObserver(() => {
   canvas.width = width
   canvas.height = height
   cx = width / 2
-  cy = height / 2
+  cy = 2 * height / 5
 });
 
 resizeObserver.observe(canvas);
@@ -35,9 +35,16 @@ const textColor = '#F8F7F7'
 
 const heartRadius = 160
 
+let now = 0
+
 function render(time) {
 
   const t = time / 1000
+  const dt = t - now
+  now = t
+  a1.advance(dt)
+  a2.advance(dt)
+  a3.advance(dt)
 
   const bgGradient = ctx.createRadialGradient(cx, cy, heartRadius, cx, cy, 480)
   bgGradient.addColorStop(0, bgGradientStartColor)
@@ -46,14 +53,10 @@ function render(time) {
   ctx.fillStyle = bgGradient
   ctx.fillRect(0, 0, width, height)
 
-  const innerAmplitude = getAmp(t, 0.3, 60 / bpm)
-  const outerAmplitude = getAmp(t, 0.4, 60 / bpm)
+  drawCircle(cx, cy, heartRadius * 1.5 - 2 * a2.getAmplitude(), 3, brightBlueColor)
+  drawCircle(cx, cy, heartRadius * 2.5 - 4 * a3.getAmplitude(), 2, secondaryBlueColor)
 
-  drawCircle(cx, cy, heartRadius, 4, pinkColor, 12)
-  drawCircle(cx, cy, heartRadius * 1.5 + 10 * innerAmplitude, 3, brightBlueColor)
-  drawCircle(cx, cy, heartRadius * 2.5 + 20 * outerAmplitude, 2, secondaryBlueColor)
-
-  drawText(cx, cy, '67', 60, textColor)
+  drawText(cx, cy, bpm, 60, textColor)
   drawText(cx, cy + 60, 'BPM', 60, textColor)
 
   ring1.draw(ctx, t)
@@ -63,6 +66,11 @@ function render(time) {
   drawHeader('Polar H10+ 0xae83ff00323de')
 
   requestAnimationFrame(render)
+
+  bpm = Math.floor(90 + 30 * Math.sin(t / 10))
+  a1.updatePeriod(60 / bpm)
+  a2.updatePeriod(60 / bpm)
+  a3.updatePeriod(60 / bpm)
 }
 
 requestAnimationFrame(render)
@@ -117,21 +125,40 @@ function drawHeader(text) {
   ctx.fillText(text, 80, padding + fontSize + 12)
 }
 
-function getAmp(t, tau, period) {
-  t = t - Math.floor(t / period) * period
-  if (t < tau) {
-    return t / tau
-  } else {
-    return (period - t) / (period - tau)
+const Amplitude = ({tau, period}) => {
+  let _tau = tau * period
+  let _period = period
+  let _nextPeriod = period
+  let _t = 0
+
+  return {
+    getAmplitude() {
+      if (_t < _tau) {
+        return _t / _tau
+      } else {
+        return (_period - _t) / (_period - _tau)
+      }
+    },
+    advance(dt) {
+      _t += dt
+      if (_t > _period) {
+        _t = 0
+        _period = _nextPeriod
+        _tau = tau * _period
+      }
+    },
+    updatePeriod(period) {
+      _nextPeriod = period
+    }
   }
 }
 
-const PulseRing = ({radiusFunc, pointsCount, strokeStyle, lineWidth}) => {
+const PulseRing = ({radiusFunc, ampFunc, pointsCount, strokeStyle, lineWidth}) => {
   return {
     draw(ctx, time) {
       const points = []
       for (let i = 0; i < pointsCount; i++) {
-        const r = radiusFunc(i, pointsCount, time)
+        const r = radiusFunc(i, pointsCount, time, ampFunc)
         points.push({
           x: cx + r * Math.cos(i / pointsCount * M_2PI),
           y: cy + r * Math.sin(i / pointsCount * M_2PI)
@@ -151,13 +178,18 @@ const PulseRing = ({radiusFunc, pointsCount, strokeStyle, lineWidth}) => {
   }
 }
 
-const bpm = 67
+let bpm = 67
+
+const a1 = Amplitude({tau: 0.2, period: 60 / bpm })
+const a2 = Amplitude({tau: 0.3, period: 60 / bpm })
+const a3 = Amplitude({tau: 0.4, period: 60 / bpm })
 
 const ring1 = PulseRing({
-  radiusFunc: (i, n, time) => {
-    const a = -getAmp(time, 0.4, 60 / bpm)
-    return heartRadius + a * (18 * Math.sin(i / n * 6 * Math.PI - 7 * time) +
-      12 * Math.sin(i / n * 12 * Math.PI + 4 * time))
+  ampFunc: () => a1.getAmplitude(),
+  radiusFunc: (i, n, time, ampFunc) => {
+    const a = ampFunc()
+    return heartRadius + a * (18 * Math.sin(i / n * 6 * Math.PI - 7.3 * time) +
+      12 * Math.sin(i / n * 12 * Math.PI + 4.7 * time))
   },
   pointsCount: 100,
   strokeStyle: 'rgba(240, 183, 174, 0.2)',
@@ -165,10 +197,11 @@ const ring1 = PulseRing({
 })
 
 const ring2 = PulseRing({
-  radiusFunc: (i, n, time) => {
-    const a = -getAmp(time, 0.3, 60/bpm)
-    return heartRadius + a * (12 * Math.sin(i / n * 14 * Math.PI + time) +
-      18 * Math.sin(i / n * 18 * Math.PI - 3 * time))
+  ampFunc: () => a2.getAmplitude(),
+  radiusFunc: (i, n, time, ampFunc) => {
+    const a = ampFunc()
+    return heartRadius + a * (12 * Math.sin(i / n * 14 * Math.PI + 1.2 * time) +
+      18 * Math.sin(i / n * 18 * Math.PI - 3.5 * time))
   },
   pointsCount: 100,
   strokeStyle: 'rgba(240, 183, 174, 1)',
@@ -176,11 +209,12 @@ const ring2 = PulseRing({
 })
 
 const ring3 = PulseRing({
-  radiusFunc: (i, n, time) => {
-    const a = -getAmp(time, 0.2, 60/bpm)
-    return heartRadius + a * (31 * Math.sin(i / n * 8 * Math.PI + time) +
-      21 * Math.sin(i / n * 12 * Math.PI + time * 2) +
-      8 * Math.sin(i / n * 24 * Math.PI + time * 3))
+  ampFunc: () => a3.getAmplitude(),
+  radiusFunc: (i, n, time, ampFunc) => {
+    const a = ampFunc()
+    return heartRadius + a * (31 * Math.sin(i / n * 8 * Math.PI + 2.3 * time) +
+      21 * Math.sin(i / n * 12 * Math.PI + time * 2.7) +
+      8 * Math.sin(i / n * 24 * Math.PI + time * 3.3))
   },
   pointsCount: 100,
   strokeStyle: 'rgba(240, 183, 174, 0.8)',
