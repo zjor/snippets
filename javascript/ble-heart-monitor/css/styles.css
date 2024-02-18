@@ -5,6 +5,7 @@
 html, body, div, canvas {
   margin: 0;
   padding: 0;
+  color: #F8F7F7;
 }
 
 #root {
@@ -45,6 +46,20 @@ footer div {
 
 footer div:first-child {
   text-transform: uppercase;
+}
+
+footer a {
+  text-decoration: none;
+}
+footer a:hover {
+  border-bottom: #F8F7F7 1px solid;
+}
+
+.vertical-align {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 /*# sourceMappingURL=styles.css.map */

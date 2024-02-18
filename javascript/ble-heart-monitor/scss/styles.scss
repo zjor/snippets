@@ -1,3 +1,5 @@
+$textColor: #F8F7F7;
+
 @font-face {
   font-family: Jura-Ragular;
   src: url('/fonts/Jura-Regular.ttf');
@@ -6,6 +8,7 @@
 html, body, div, canvas {
   margin: 0;
   padding: 0;
+  color: $textColor;
 }
 
 #root {
@@ -46,4 +49,20 @@ footer div {
 
 footer div:first-child {
   text-transform: uppercase;
+}
+
+footer {
+  a {
+    text-decoration: none;
+    &:hover {
+      border-bottom: $textColor 1px solid;
+    }
+  }
+}
+
+.vertical-align {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
