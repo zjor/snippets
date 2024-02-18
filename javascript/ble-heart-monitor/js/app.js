@@ -1,3 +1,5 @@
+import {HearRateMonitor, Status} from './hrm.js'
+
 const canvas = document.querySelector('#canvas')
 const ctx = canvas.getContext('2d')
 const fontJura = new FontFace('Jura-Regular', 'url(/fonts/Jura-Regular.ttf)')
@@ -37,11 +39,42 @@ const heartRadius = 160
 
 let now = 0
 
+let status = Status.ready
+
+const hrm = HearRateMonitor({
+  statusListener: (_status) => status = _status,
+  pulseListener: pulse => bpm = pulse
+})
+
 function render(time) {
 
-  const t = time / 1000
-  const dt = t - now
+  let t = time / 1000
+  let dt = t - now
   now = t
+
+  if (bpm == 0 ) {
+    t = 0
+    dt = 0
+  } else {
+    if (a1.isInitialized()) {
+      a1.updateBpm(bpm)
+    } else {
+      a1.setBpm(bpm)
+    }
+
+    if (a2.isInitialized()) {
+      a2.updateBpm(bpm)
+    } else {
+      a2.setBpm(bpm)
+    }
+
+    if (a3.isInitialized()) {
+      a3.updateBpm(bpm)
+    } else {
+      a3.setBpm(bpm)
+    }
+  }
+
   a1.advance(dt)
   a2.advance(dt)
   a3.advance(dt)
@@ -63,14 +96,20 @@ function render(time) {
   ring2.draw(ctx, t)
   ring3.draw(ctx, t)
 
-  drawHeader('Polar H10+ 0xae83ff00323de')
-
+  if (status == Status.connected) {
+    drawHeader(`${hrm.getDeviceName()}`)
+  } else if (status == Status.ready){
+    drawText(cx, cy + heartRadius * 2, "Tap anywhere to connect", 32, textColor)
+  } else if (status == Status.connecting) {
+    drawText(cx, cy + heartRadius * 2, "Connecting...", 32, textColor)
+  } else {
+    drawText(cx, cy + heartRadius * 2, "Connection failed", 32, textColor)
+    bpm = 42
+    a1.setBpm(bpm)
+    a2.setBpm(bpm)
+    a3.setBpm(bpm)
+  }
   requestAnimationFrame(render)
-
-  bpm = Math.floor(90 + 30 * Math.sin(t / 10))
-  a1.updatePeriod(60 / bpm)
-  a2.updatePeriod(60 / bpm)
-  a3.updatePeriod(60 / bpm)
 }
 
 requestAnimationFrame(render)
@@ -126,6 +165,7 @@ function drawHeader(text) {
 }
 
 const Amplitude = ({tau, period}) => {
+  let _initialized = false
   let _tau = tau * period
   let _period = period
   let _nextPeriod = period
@@ -147,8 +187,15 @@ const Amplitude = ({tau, period}) => {
         _tau = tau * _period
       }
     },
-    updatePeriod(period) {
-      _nextPeriod = period
+    isInitialized() {
+      return _initialized
+    },
+    setBpm(bpm) {
+      _period = _nextPeriod = 60 / bpm
+      _initialized = true
+    },
+    updateBpm(bpm) {
+      _nextPeriod = 60 / bpm
     }
   }
 }
@@ -178,7 +225,7 @@ const PulseRing = ({radiusFunc, ampFunc, pointsCount, strokeStyle, lineWidth}) =
   }
 }
 
-let bpm = 67
+let bpm = 0
 
 const a1 = Amplitude({tau: 0.2, period: 60 / bpm })
 const a2 = Amplitude({tau: 0.3, period: 60 / bpm })
@@ -221,3 +268,8 @@ const ring3 = PulseRing({
   lineWidth: 6
 })
 
+window.addEventListener('click', () => {
+  if (status == Status.ready) {
+    hrm.connect().then(console.log)
+  }
+})
