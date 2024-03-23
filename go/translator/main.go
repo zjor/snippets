@@ -55,6 +55,7 @@ func main() {
 		},
 		Action: func(ctx *cli.Context) error {
 			word := ctx.Args().Get(0)
+			//TODO: handle empty word
 			fmt.Println(translate(word, ctx.Bool("reverse")))
 			return nil
 		},
@@ -64,3 +65,6 @@ func main() {
 		log.Fatal(err)
 	}
 }
+
+//TODO: add readme: https://github.com/soimort/translate-shell
+//TODO: ensure the tool is installed
