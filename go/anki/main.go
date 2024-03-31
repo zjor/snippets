@@ -37,6 +37,11 @@ const (
 	RobotoMono               = "RobotoMono-Regular"
 )
 
+var (
+	home, _ = os.UserHomeDir()
+	baseDir = home + "/.anki"
+)
+
 type Translation struct {
 	Word        string `json:"word"`
 	Translation string `json:"translation"`
@@ -199,7 +204,7 @@ func fill(img *image.RGBA, color color.RGBA) {
 }
 
 func getFontFace(family FontFamily, size float64) font.Face {
-	f, err := os.ReadFile(fmt.Sprintf("./fonts/%s.ttf", family))
+	f, err := os.ReadFile(fmt.Sprintf("%s/fonts/%s.ttf", baseDir, family))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -299,13 +304,13 @@ func RunPipeline(word string) {
 	fmt.Printf("generating image for prompt: '%s'...\n", t.ImagePrompt)
 
 	url := GenerateImage(t.ImagePrompt)
-	imageLocation := ".images/" + word + ".png"
+	imageLocation := baseDir + "/images/" + word + ".png"
 	err = DownloadFile(url, imageLocation)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("Image saved at: %s\n", imageLocation)
-	flashCardLocation := ".images/out_" + word + ".png"
+	flashCardLocation := baseDir + "/images/out_" + word + ".png"
 
 	err = BuildFlashCard(FlashCardConfig{
 		Word:          word,
@@ -351,6 +356,6 @@ func main() {
 }
 
 /*
-- store images, fonts, .env in user's folder
+- store images, fonts in user's folder
 - install
 */
