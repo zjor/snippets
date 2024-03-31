@@ -5,9 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/joho/godotenv"
 	"github.com/replicate/replicate-go"
 	"github.com/sashabaranov/go-openai"
+	"github.com/urfave/cli/v2"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
@@ -20,6 +20,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"strconv"
 )
 
@@ -149,11 +150,6 @@ func GenerateImage(prompt string) string {
 }
 
 func Translate(what, from, to string) (*Translation, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Failed to load .env", err)
-	}
-
 	prompt := fmt.Sprintf(
 		`Step 1: Translate the following word: "%s" from %s into %s.
 
@@ -234,10 +230,8 @@ func drawTranslation(img *image.RGBA, word, translation string, fontColor color.
 		Face: face,
 	}
 	w := (d.MeasureString(str)) >> 6
-	fmt.Println(w)
 
 	x, y := (TargetImageWidth-w)/2, ((TargetImageHeight-ImageHeight)/2+fontSize)/2
-	fmt.Printf("%d, %d\n", x, y)
 	point := fixed.Point26_6{X: x << 6, Y: fixed.Int26_6(y << 6)}
 
 	d.Dot = point
@@ -255,10 +249,8 @@ func drawExample(img *image.RGBA, str string, fontColor color.RGBA) {
 		Face: face,
 	}
 	w := (d.MeasureString(str)) >> 6
-	fmt.Println(w)
 
 	x, y := (TargetImageWidth-w)/2, TargetImageHeight-((TargetImageHeight-ImageHeight)/2-fontSize)/2
-	fmt.Printf("%d, %d\n", x, y)
 	point := fixed.Point26_6{X: x << 6, Y: fixed.Int26_6(y << 6)}
 
 	d.Dot = point
@@ -298,17 +290,23 @@ func BuildFlashCard(config FlashCardConfig, outImageFilename string) error {
 }
 
 func RunPipeline(word string) {
+	fmt.Println("translating...")
 	t, err := Translate(word, "en", "ru")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%+v\n", t)
+	fmt.Printf("\t%s - %s\n\t%s\n", t.Word, t.Translation, t.Example)
+	fmt.Printf("generating image for prompt: '%s'...\n", t.ImagePrompt)
+
 	url := GenerateImage(t.ImagePrompt)
 	imageLocation := ".images/" + word + ".png"
 	err = DownloadFile(url, imageLocation)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Printf("Image saved at: %s\n", imageLocation)
+	flashCardLocation := ".images/out_" + word + ".png"
+
 	err = BuildFlashCard(FlashCardConfig{
 		Word:          word,
 		Translation:   t.Translation,
@@ -316,12 +314,43 @@ func RunPipeline(word string) {
 		ImageLocation: imageLocation,
 		BgColor:       randomColor(),
 		Color:         color.RGBA{A: 255},
-	}, ".images/out_"+word+".png")
+	}, flashCardLocation)
 	if err != nil {
 		log.Fatal(err)
+	}
+	fmt.Printf("Flash card saved at: %s\n", flashCardLocation)
+	exec.Command("open", flashCardLocation).Run()
+}
+
+func verifyEnv() {
+	vars := []string{"OPEN_AI_API_TOKEN", "REPLICATE_API_TOKEN"}
+	for _, v := range vars {
+		_, set := os.LookupEnv(v)
+		if !set {
+			log.Fatal(fmt.Sprintf("%s variable is not set", v))
+		}
 	}
 }
 
 func main() {
-	RunPipeline("clinging")
+	verifyEnv()
+	app := &cli.App{
+		Action: func(ctx *cli.Context) error {
+			word := ctx.Args().Get(0)
+			if len(word) <= 2 {
+				log.Fatal("The word should be at least 2 letters long")
+			}
+			RunPipeline(word)
+			return nil
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
 }
+
+/*
+- store images, fonts, .env in user's folder
+- install
+*/
