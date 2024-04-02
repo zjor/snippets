@@ -11,3 +11,6 @@ The following environment variables should be set:
 The following directories should be present:
 - `~/.anki/images` (empty)
 - `~/.anki/fonts` (should contain fonts)
+
+## TODO
+- automatically post flashcard with https://github.com/Davincible/goinsta

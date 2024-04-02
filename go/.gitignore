@@ -1,3 +1,4 @@
 .env
 .images
-invoicer
+.data.json
+*.pdf
