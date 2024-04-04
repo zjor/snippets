@@ -2,6 +2,7 @@ import './App.css'
 import SplitNode from "./components/SplitNode/SplitNode.jsx";
 import Splittable from "./components/Splittable/Splittable.jsx";
 import {useState} from "react";
+// import Sandbox from "./components/Sandbox/Sandbox.jsx";
 
 const randomColor = () => {
     const colors = [
@@ -29,36 +30,47 @@ const randomColor = () => {
     return colors[Math.floor(Math.random() * colors.length)]
 }
 
+// const tree = {
+//     type: 'node',
+//     vertical: false,
+//     first: {
+//         type: 'leaf',
+//         content: 'Hello',
+//         color: randomColor()
+//     },
+//     second: {
+//         type: 'leaf',
+//         content: 'World',
+//         color: randomColor()
+//     }
+// }
+
 const tree = {
-    type: 'node',
-    vertical: false,
-    first: {
-        type: 'leaf',
-        content: 'Hello',
-        color: randomColor()
-    },
-    second: {
-        type: 'leaf',
-        content: 'World',
-        color: randomColor()
-    }
+    type: 'leaf',
+    content: 'Click anywhere',
+    color: randomColor()
 }
 
 function App() {
 
     function buildTree(node) {
         if (node.type == 'leaf') {
-            const onSplit = () => {
+            const onSplit = (direction) => {
+                console.log(direction)
+                if (!direction) {
+                    return
+                }
+
                 node.type = 'node'
-                node.vertical = (Math.random() > 0.5 ? true : false)
+                node.vertical = direction === 'vertical'
                 node.first = {
                     type: 'leaf',
-                    content: 'Hello',
+                    content: 'A',
                     color: randomColor()
                 }
                 node.second = {
                     type: 'leaf',
-                    content: 'World',
+                    content: 'B',
                     color: randomColor()
                 }
                 setRoot(buildTree(tree))
@@ -73,6 +85,7 @@ function App() {
     return (
             <div style={{height: '100vh'}}>
                 {root}
+                {/*<Sandbox/>*/}
             </div>
     )
 }

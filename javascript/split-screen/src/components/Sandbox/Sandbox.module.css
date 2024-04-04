@@ -1,0 +1,24 @@
+.wrapper {
+    background-color: #747bff;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    grid-gap: 4px;
+    height: 100vh;
+}
+
+.wrapper div {
+    background-color: green;
+    align-content: center;
+}
+
+.inner {
+    background-color: red;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    grid-gap: 4px;
+    height: 100%;
+}
+.inner div {
+    background-color: #213547;
+}

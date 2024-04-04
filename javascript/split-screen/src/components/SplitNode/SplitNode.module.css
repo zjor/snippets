@@ -2,25 +2,20 @@
     width: 100%;
     height: 100%;
     background-color: #747bff;
-    display: flex;
+    display: grid;
+    grid-gap: 2px;
+    align-content: center;
 }
 
 .vertical {
-    flex-direction: row;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    height: 100%;
 }
 
 .horizontal {
-    flex-direction: column;
+    grid-template-rows: 1fr 1fr;
 }
 
 .first, .second {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-}
-
-.splitter {
-    border-left: 3px solid black;
 }
