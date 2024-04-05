@@ -12,6 +12,12 @@ createApp({
         alt: 'energy-octopus-preview',
         description: 'Energy Octopus'
       },
+      {
+        href: `${URL_PREFIX}/dist/split-screen/index.html`,
+        img: `${URL_PREFIX}/images/split-screen-preview.png`,
+        alt: 'split-screen-preview',
+        description: 'Split Screen'
+      },
     ]
 
     const ccItems = [
