@@ -47,6 +47,7 @@ const randomColor = () => {
 
 const tree = {
     type: 'leaf',
+    depth: 0,
     content: 'Click anywhere',
     color: randomColor()
 }
@@ -56,8 +57,11 @@ function App() {
     function buildTree(node) {
         if (node.type == 'leaf') {
             const onSplit = (direction) => {
-                console.log(direction)
                 if (!direction) {
+                    return
+                }
+
+                if (node.depth > 6) {
                     return
                 }
 
@@ -65,17 +69,19 @@ function App() {
                 node.vertical = direction === 'vertical'
                 node.first = {
                     type: 'leaf',
+                    depth: node.depth + 1,
                     content: 'A',
                     color: randomColor()
                 }
                 node.second = {
                     type: 'leaf',
+                    depth: node.depth + 1,
                     content: 'B',
                     color: randomColor()
                 }
                 setRoot(buildTree(tree))
             }
-            return new Splittable({content: node.content, color: node.color, onSplit})
+            return new Splittable({depth: node.depth, content: node.content, color: node.color, onSplit})
         } else {
             return new SplitNode({first: buildTree(node.first), second: buildTree(node.second), vertical: node.vertical})
         }

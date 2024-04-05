@@ -1,6 +1,6 @@
 import styles from './Splittable.module.css'
 
-function Splittable({content, color, onSplit}) {
+function Splittable({depth, content, color, onSplit}) {
     // const onMouseMove = (e) => {
     //     const n = e.nativeEvent
     //     const t = e.target
@@ -40,7 +40,12 @@ function Splittable({content, color, onSplit}) {
             className={styles.wrapper}
             style={{backgroundColor: color}}
             // onMouseMove={onMouseMove}
-            onClick={onClick}>{content}</div>
+            onClick={onClick}>
+            <div className={styles.content}>
+                <div className={styles.depth}>{depth}</div>
+                {content}
+            </div>
+        </div>
     )
 }
 
