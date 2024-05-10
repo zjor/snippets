@@ -1,3 +1,34 @@
-import numpy as np
-
-print(np.ones((3, 3)) / 9)
+keys = [
+    "battery_vdc_millivolts",
+    "flow_events",
+    "flow_time_minutes",
+    "gallons",
+    "transmit_attempt_count",
+    "battery_vdc_millivolts",
+    "pulse_count_raw",
+    "transmit_attempt_count",
+    "events",
+    "flow_time",
+    "gallons",
+    "temperature_f",
+    "backflow",
+    "burst",
+    "dry",
+    "gallons",
+    "hardware_error",
+    "leak",
+    "low_battery",
+    "low_temperature",
+    "children",
+    "neighbors",
+    "alarm_sensor",
+    "battery_vdc_millivolts",
+    "sensor_1",
+    "sensor_2",
+    "gallons",
+    "interval_length",
+    "meter_sn",
+    "utility",
+    "rope_sensor",
+    "humidity"
+]
