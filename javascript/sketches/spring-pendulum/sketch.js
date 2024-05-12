@@ -1,4 +1,5 @@
 const canvasSketch = require('canvas-sketch')
+const {Vector} = require('./geometry')
 const {PI: pi, cos, sin} = Math
 
 const settings = {
@@ -63,6 +64,64 @@ function derive(state, t, dt) {
 }
 
 /**
+ *
+ * @param c {CanvasRenderingContext2D}
+ * @param s {Vector}
+ * @param e {Vector}
+ */
+function drawSpring(c, s, e) {
+    const dir = e.minus(s).normalize()
+    const norm = Vector(-dir.y, dir.x)
+
+    c.strokeStyle = PRIMARY_COLOR
+    c.lineWidth = 5.0
+
+    const vertices = []
+    const n = 15
+    const a = 15 * l / x
+    const [dx, dy] = [(e.x - s.x) / n, (e.y - s.y) / n]
+    for (let i = 0; i < n; i++) {
+        const sign = (i > 1 && i < n - 4) ? ((i % 2 == 0) ? 1 : -1) : 0
+        const noise = [
+            sin(i + a) * a / 4,
+            cos(i + a) * a / 4,
+        ]
+        vertices.push(Vector(
+            s.x + dx * i + sign * a * norm.x + sign * noise[0],
+            s.y + dy * i + sign * a * norm.y + sign * noise[1]))
+    }
+
+    const points = []
+    points.push(vertices[0])
+    for (let i = 1; i < vertices.length; i++) {
+        const [prev, next] = [vertices[i - 1], vertices[i]]
+        points.push(Vector(
+            (prev.x + next.x) / 2,
+            (prev.y + next.y) / 2
+        ))
+        points.push(next)
+    }
+
+    c.beginPath()
+    c.moveTo(points[0].x, points[0].y)
+
+    for (let i = 1; i < points.length; i+=2) {
+        c.quadraticCurveTo(
+            points[i - 1].x, points[i - 1].y,
+            points[i].x, points[i].y)
+    }
+    c.stroke()
+
+    // c.fillStyle = BLUE
+    // for (let i = 0; i < points.length; i++) {
+    //     c.beginPath()
+    //     c.ellipse(points[i].x, points[i].y, 5, 5, 0, 0, 2 * pi)
+    //     c.fill()
+    // }
+
+}
+
+/**
  * Renders a pendulum
  * @param c {CanvasRenderingContext2D}
  * @param frame {Number} current animation frame
@@ -73,12 +132,8 @@ function drawPendulum(c, frame) {
         origin[0] + scale * x * cos(theta + 1.5 * pi),
         origin[1] - scale * x * sin(theta + 1.5 * pi)
     ]
-    c.strokeStyle = PRIMARY_COLOR
-    c.lineWidth = 10.0 * (l / x) ** 4
-    c.beginPath()
-    c.moveTo(...origin)
-    c.lineTo(_x, _y)
-    c.stroke()
+
+    drawSpring(c, Vector(...origin), Vector(_x, _y))
 
     if (frame % 1 == 0) {
         trail.unshift([_x, _y])
@@ -116,15 +171,24 @@ const sketch = ({canvas}) => {
 
         const state = [x, dx, theta, dTheta]
         const next = integrateRK4(state, t, dt, derive)
-        console.log(frame, next)
         x = next[0]
         dx = next[1]
         theta = next[2]
         dTheta = next[3]
 
         c.fillRect(0, 0, width, height)
+        // c.lineCap = "round"
         drawPendulum(c, frame)
     }
 }
 
 canvasSketch(sketch, settings)
+
+/*
+TODO:
+    - spring amplitude ~ extension
+    - 3 shifted ropes, different widths and shades
+    - pause animation by click
+    - emit "sparkles" when the velocity is close to zero
+    - interactive d&d
+ */
