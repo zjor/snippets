@@ -18,6 +18,13 @@ createApp({
         alt: 'split-screen-preview',
         description: 'Split Screen'
       },
+      {
+        href: `${URL_PREFIX}/dist/sketches/spring-pendulum.html`,
+        img: `${URL_PREFIX}/images/spring-pendulum-preview.png`,
+        alt: 'spring-pendulum-preview',
+        description: 'Spring Pendulum'
+      },
+
     ]
 
     const ccItems = [
