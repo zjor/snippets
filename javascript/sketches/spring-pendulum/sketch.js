@@ -68,20 +68,20 @@ function derive(state, t, dt) {
  * @param c {CanvasRenderingContext2D}
  * @param s {Vector}
  * @param e {Vector}
+ * @param segments {Number}
+ * @param amplitude {Number}
+ * @param lineWidth {Number}
+ * @param color {string}
  */
-function drawSpring(c, s, e) {
+function drawSpring(c, s, e, segments, amplitude, lineWidth, color) {
     const dir = e.minus(s).normalize()
     const norm = Vector(-dir.y, dir.x)
 
-    c.strokeStyle = PRIMARY_COLOR
-    c.lineWidth = 5.0
-
     const vertices = []
-    const n = 15
-    const a = 15 * l / x
-    const [dx, dy] = [(e.x - s.x) / n, (e.y - s.y) / n]
-    for (let i = 0; i < n; i++) {
-        const sign = (i > 1 && i < n - 4) ? ((i % 2 == 0) ? 1 : -1) : 0
+    const a = amplitude * l / x
+    const [dx, dy] = [(e.x - s.x) / segments, (e.y - s.y) / segments]
+    for (let i = 0; i < segments; i++) {
+        const sign = (i > 1 && i < segments - 4) ? ((i % 2 == 0) ? 1 : -1) : 0
         const noise = [
             sin(i + a) * a / 4,
             cos(i + a) * a / 4,
@@ -102,6 +102,9 @@ function drawSpring(c, s, e) {
         points.push(next)
     }
 
+    c.strokeStyle = color
+    c.lineWidth = lineWidth
+
     c.beginPath()
     c.moveTo(points[0].x, points[0].y)
 
@@ -111,14 +114,6 @@ function drawSpring(c, s, e) {
             points[i].x, points[i].y)
     }
     c.stroke()
-
-    // c.fillStyle = BLUE
-    // for (let i = 0; i < points.length; i++) {
-    //     c.beginPath()
-    //     c.ellipse(points[i].x, points[i].y, 5, 5, 0, 0, 2 * pi)
-    //     c.fill()
-    // }
-
 }
 
 /**
@@ -133,7 +128,9 @@ function drawPendulum(c, frame) {
         origin[1] - scale * x * sin(theta + 1.5 * pi)
     ]
 
-    drawSpring(c, Vector(...origin), Vector(_x, _y))
+    drawSpring(c, Vector(...origin), Vector(_x, _y), 15, 15, 4.0, PRIMARY_COLOR)
+    drawSpring(c, Vector(...origin), Vector(_x, _y), 19, 8, 3.0, PRIMARY_COLOR)
+    drawSpring(c, Vector(...origin), Vector(_x, _y), 23, 19, 2.0, PRIMARY_COLOR)
 
     if (frame % 1 == 0) {
         trail.unshift([_x, _y])
@@ -145,7 +142,7 @@ function drawPendulum(c, frame) {
     for (let i = 0; i < trail.length; i++) {
         const [tx, ty] = trail[i]
         const scale = (trail.length - i) / trail.length
-        const _r = .9 * r * scale
+        const _r = .7 * r * scale
         c.fillStyle = `rgba(1, 220, 3, ${.15 * Math.atan(scale) + 0.1})`
         c.beginPath()
         c.ellipse(tx, ty, _r, _r, 0, 0, 2 * pi)
