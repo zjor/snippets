@@ -9,8 +9,11 @@ const settings = {
 
 const PRIMARY_COLOR = '#01DC03' // rgb(1, 220, 3)
 const DARK_GREEN = '#017A02'
-const BLUE = '#12B8FF'
+const BLUE = '#12B8FF' // rgb(18, 184, 255)
 const DARK_BLUE = '#0C88B2'
+const ROSE = '#FD4499'
+
+let paused = true
 
 let origin = [540, 1080 / 3]
 let l = 1.5
@@ -128,9 +131,14 @@ function drawPendulum(c, frame) {
         origin[1] - scale * x * sin(theta + 1.5 * pi)
     ]
 
-    drawSpring(c, Vector(...origin), Vector(_x, _y), 15, 15, 4.0, PRIMARY_COLOR)
-    drawSpring(c, Vector(...origin), Vector(_x, _y), 19, 8, 3.0, PRIMARY_COLOR)
-    drawSpring(c, Vector(...origin), Vector(_x, _y), 23, 19, 2.0, PRIMARY_COLOR)
+    drawSpring(c, Vector(...origin), Vector(_x, _y), 15, 23, 4.0, PRIMARY_COLOR)
+    drawSpring(c, Vector(...origin), Vector(_x, _y), 19, 13, 3.0, "rgba(1, 220, 3, 0.9)")
+    drawSpring(c, Vector(...origin), Vector(_x, _y), 23, 19, 2.0, "rgba(1, 220, 3, 0.7)")
+
+    c.fillStyle = ROSE
+    c.beginPath()
+    c.ellipse(...origin, 10, 10, 0, 0, 2 * pi)
+    c.fill()
 
     if (frame % 1 == 0) {
         trail.unshift([_x, _y])
@@ -156,7 +164,38 @@ function drawPendulum(c, frame) {
     c.beginPath()
     c.ellipse(_x, _y, r, r, 0, 0, 2 * pi)
     c.fill()
+}
 
+/**
+ *
+ * @param c {CanvasRenderingContext2D}
+ * @param label {string}
+ * @param value {Number}
+ * @param maxValue {Number}
+ * @param yOffset {Number}
+ */
+function drawState(c, label, value, maxValue, yOffset) {
+    c.font = "36px monospace";
+    c.fillStyle = BLUE
+    const metrics = c.measureText(label)
+    const fontHeight = (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent)
+    c.fillText(label, 36, yOffset + fontHeight)
+
+    c.fillStyle = "rgba(18, 184, 255, 0.5)"
+    const barWidth = 320
+    c.fillRect(80, yOffset + 0.15 * fontHeight, barWidth, fontHeight)
+
+    c.fillStyle = BLUE
+    const valueWidth = barWidth * value / maxValue
+    c.fillRect(80 + barWidth / 2, yOffset + 0.15 * fontHeight, valueWidth, fontHeight)
+
+    c.fillStyle = ROSE
+    const dividerWidth = 6
+    c.fillRect(
+        80 + barWidth / 2 - dividerWidth / 2,
+        yOffset,
+        dividerWidth,
+        fontHeight * 1.3)
 }
 
 const sketch = ({canvas}) => {
@@ -166,26 +205,26 @@ const sketch = ({canvas}) => {
         const dt = (now - t) / 1000
         t = now
 
-        const state = [x, dx, theta, dTheta]
-        const next = integrateRK4(state, t, dt, derive)
-        x = next[0]
-        dx = next[1]
-        theta = next[2]
-        dTheta = next[3]
-
         c.fillRect(0, 0, width, height)
-        // c.lineCap = "round"
         drawPendulum(c, frame)
+
+        drawState(c, "θ", theta, pi, 36)
+        drawState(c, "ω", dTheta, pi, 102) // +66
+        drawState(c, "x", x - l, l, 168)
+        drawState(c, "v", dx, l * 2, 234)
+
+        if (!paused) {
+            const state = [x, dx, theta, dTheta]
+            const next = integrateRK4(state, t, dt, derive)
+            x = next[0]
+            dx = next[1]
+            theta = next[2]
+            dTheta = next[3]
+        }
+
     }
 }
 
 canvasSketch(sketch, settings)
 
-/*
-TODO:
-    - spring amplitude ~ extension
-    - 3 shifted ropes, different widths and shades
-    - pause animation by click
-    - emit "sparkles" when the velocity is close to zero
-    - interactive d&d
- */
+window.addEventListener('click', _ => paused = !paused)
