@@ -1,0 +1,16 @@
+{
+  "name": "double-pendulum",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "canvas-sketch-cli sketch.js",
+    "build": "canvas-sketch sketch.js --name index --build --inline"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "canvas-sketch": "^0.7.7"
+  }
+}
