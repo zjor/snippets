@@ -26,6 +26,9 @@ type InvoiceData struct {
 func (v *InvoiceData) toClientItems() []client.Item {
 	var items []client.Item
 	for _, item := range v.Items {
+		if item.Qty == 0 {
+			continue
+		}
 		items = append(items, client.Item{
 			Name:     v.Prefix + " " + item.Name,
 			Quantity: item.Qty,

@@ -1,6 +1,7 @@
 const canvasSketch = require('canvas-sketch')
 const {PI: pi, cos, sin} = Math
 const {integrateRK4} = require('./ode')
+const {palette} = require('./palette')
 
 const settings = {
     dimensions: [1080, 1080],
@@ -12,9 +13,45 @@ const DARK_GREEN = '#017A02'
 const BLUE = '#12B8FF' // rgb(18, 184, 255)
 const DARK_BLUE = '#0C88B2'
 const ROSE = '#FD4499'
-
+const YELLOW = '#FFE62D'
+const PINK = '#DF19FB'
 
 let paused = true
+
+const mapIntToColor = (x, limit) => {
+    const idx = Math.min(Math.floor(Math.abs(x) / limit * 256), 255)
+    const [r, g, b] = palette[idx]
+    return `rgb(${r}, ${g}, ${b})`
+}
+
+const Trail = (length, baseColor = [18, 184, 255]) => {
+    const items = []
+    const [r, g, b] = baseColor
+
+    return {
+        add(x, y) {
+            items.unshift([x, y])
+            if (items.length >= length) {
+                items.pop()
+            }
+        },
+
+        /**
+         *
+         * @param c {CanvasRenderingContext2D}
+         */
+        render(c) {
+            for (let i = 0; i < items.length; i++) {
+                const r = 7 * (items.length - i) / items.length
+                c.fillStyle = `rgba(${r}, ${g}, ${b}, ${1 - (i / items.length)})`
+                c.beginPath()
+                c.ellipse(items[i][0], items[i][1], r, r, 0, 0, 2 * pi)
+                c.fill()
+            }
+        }
+    }
+
+}
 
 /**
  * Creates an instance of a double pendulum
@@ -36,6 +73,9 @@ const Pendulum = (
     let _dth1 = dth1
     let _th2 = th2
     let _dth2 = dth2
+
+    const trail1 = Trail(64)
+    const trail2 = Trail(512)
 
     const derive = (state, t, dt) => {
         const g = 9.81
@@ -71,8 +111,14 @@ const Pendulum = (
             const x2 = x1 + l2 * scale * sin(_th2)
             const y2 = y1 + l2 * scale * cos(_th2)
 
-            c.strokeStyle = GREEN
-            c.lineWidth = 4
+            trail1.add(x1, y1)
+            trail2.add(x2, y2)
+
+            trail1.render(c)
+            trail2.render(c)
+
+            c.strokeStyle = BLUE
+            c.lineWidth = 2
             c.beginPath()
             c.moveTo(...origin)
             c.lineTo(x1, y1)
@@ -84,12 +130,12 @@ const Pendulum = (
             c.ellipse(origin[0], origin[1], 10, 10, 0, 0, 2 * pi)
             c.fill()
 
-            c.fillStyle = BLUE
+            c.fillStyle = GREEN
             c.beginPath()
             c.ellipse(x1, y1, 10, 10, 0, 0, 2 * pi)
             c.fill()
 
-            c.fillStyle = DARK_BLUE
+            c.fillStyle = BLUE
             c.beginPath()
             c.ellipse(x2, y2, 10, 10, 0, 0, 2 * pi)
             c.fill()
@@ -98,7 +144,7 @@ const Pendulum = (
 
 }
 
-const pendulum = Pendulum(1.25, 0.25, pi / 4, 0, 0.75, 0.15, pi / 12, 0)
+const pendulum = Pendulum(1.0, 0.25, pi / 4, 0, 0.75, 0.15, pi / 12, 0)
 
 const sketch = ({canvas}) => {
 
