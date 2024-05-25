@@ -1,46 +1,35 @@
 package main
 
-import (
-	"math"
-	"math/rand"
-	"slices"
+import "errors"
+
+type Classification string
+
+const (
+	ClassificationDeficient Classification = "deficient"
+	ClassificationPerfect   Classification = "perfect"
+	ClassificationAbundant  Classification = "abundant"
 )
 
-type Character struct {
-	Strength     int
-	Dexterity    int
-	Constitution int
-	Intelligence int
-	Wisdom       int
-	Charisma     int
-	Hitpoints    int
-}
+var ErrOnlyPositive = errors.New("only positive number is allowed")
 
-func Modifier(score int) int {
-	return int(math.Ceil(float64(score)-10.0) / 2.0)
-}
-
-func Ability() int {
-	rands := []int{
-		rand.Intn(6) + 1,
-		rand.Intn(6) + 1,
-		rand.Intn(6) + 1,
-		rand.Intn(6) + 1,
+func Classify(n int64) (Classification, error) {
+	if n <= 0 {
+		return "", ErrOnlyPositive
 	}
-	slices.Sort(rands)
-	slices.Reverse(rands)
-	return rands[0] + rands[1] + rands[2]
-}
+	sum := int64(0)
 
-func GenerateCharacter() Character {
-	return Character{
-		Strength:     Ability(),
-		Dexterity:    Ability(),
-		Constitution: Ability(),
-		Intelligence: Ability(),
-		Wisdom:       Ability(),
-		Charisma:     Ability(),
-		Hitpoints:    10 + Modifier(Ability()),
+	var i int64
+	for i = 1; i < n; i++ {
+		if n%i == 0 {
+			sum += i
+		}
+	}
+	if sum == n {
+		return ClassificationPerfect, nil
+	} else if sum < n {
+		return ClassificationDeficient, nil
+	} else {
+		return ClassificationAbundant, nil
 	}
 }
 
