@@ -1,126 +1,72 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"fmt"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
-	"io"
 	"log"
-	"net/http"
-	"net/url"
+	"os"
 	"time"
+	"zjor.github.io/youtrack/lib"
 )
 
-var baseURL = "https://ion.youtrack.cloud"
-
-/**
-{
-  "usesMarkdown": true,
-  "text": "I keep on testing *samples*.",
-  "date": 1539000000000,
-  "author": {
-    "id": "24-0"
-  },
-  "duration": {
-    "minutes": 120
-  },
-  "type": {
-    "id": "49-0"
-  }
-}
-*/
-
-type Duration struct {
-	Minutes int `json:"minutes"`
-}
-
-type CreateWorkItemRequest struct {
-	UsesMarkdown bool     `json:"usesMarkdown"`
-	Text         string   `json:"text"`
-	Date         int64    `json:"date"`
-	Duration     Duration `json:"duration"`
-}
-
-func setHeaders(req *http.Request) {
-	req.Header.Set("Authorization", "Bearer "+viper.GetString("YOUTRACK_ACCESS_TOKEN"))
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-}
-
-func FindMyIssuesInProgress() {
-	query := "for: me state: {In Progress}"
-	uri := fmt.Sprintf("%s/api/issues?query=%s&fields=id,summary", baseURL, url.QueryEscape(query))
-	req, err := http.NewRequest("GET", uri, nil)
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	setHeaders(req)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("Error reading response body: %v\n", err)
-		return
-	}
-
-	fmt.Println(string(body))
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Error: %v", resp.Status)
-	}
+func logTime(duration time.Duration) {
+	lib.FindMyIssuesInProgress()
 
 }
 
-func TrackTimeForIssue(id string, text string, durationMinutes int) {
-	uri := fmt.Sprintf("%s/api/issues/%s/timeTracking/workItems", baseURL, id)
-	jsonBody, err := json.Marshal(CreateWorkItemRequest{
-		UsesMarkdown: true,
-		Text:         text,
-		Date:         time.Now().UnixMilli(),
-		Duration:     Duration{Minutes: durationMinutes},
-	})
-
+func handleTimeLogEntry(topic string, message string) {
+	entry, err := lib.ParseTimeLogEntry(message)
 	if err != nil {
-		log.Fatalf("Error marshalling request body: %v", err)
+		log.Printf("Error parsing transition: %v", err)
 	}
-
-	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsonBody))
-	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
-	}
-	setHeaders(req)
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Printf("Error reading response body: %v\n", err)
-		return
-	}
-
-	fmt.Println(string(body))
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Error: %v", resp.Status)
+	if entry.From == lib.Busy && entry.To == lib.Idle {
+		go logTime(entry.Duration)
 	}
 }
 
-func main() {
+func run(ctx context.Context) error {
+	var messageChannel = make(chan mqtt.Message)
 
+	topic := fmt.Sprintf("%s/cube", viper.GetString("TELEGRAM_USER_ID"))
+	lib.Subscribe(topic, lib.CreateMessageHandler(messageChannel))
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.Tick(1 * time.Second):
+			fmt.Println("Tick")
+		case msg := <-messageChannel:
+			handleTimeLogEntry(msg.Topic(), string(msg.Payload()))
+		}
+	}
+}
+
+func initConfig() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 
 	viper.AutomaticEnv()
-	FindMyIssuesInProgress()
-	TrackTimeForIssue("2-501", "I keep on testing *samples*.", 12)
+}
+
+func _main() {
+	initConfig()
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	if err := run(ctx); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
+}
+
+func main() {
+	initConfig()
+	lib.FindMyIssuesInProgress()
 }

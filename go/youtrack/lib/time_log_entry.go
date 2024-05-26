@@ -1,8 +1,7 @@
-package main
+package lib
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"time"
@@ -25,11 +24,13 @@ func (t TimeLogEntry) String() string {
 	return fmt.Sprintf("%s -> %s time: %s", t.From, t.To, t.Duration)
 }
 
-// Examples:
+// ParseTimeLogEntry
+//
+//	Examples:
+//
 // idle busy time: 00:00:02.319 (2319ms)
 // busy idle time: 00:00:03.315 (3315ms)
-
-func ParseTransition(s string) (TimeLogEntry, error) {
+func ParseTimeLogEntry(s string) (TimeLogEntry, error) {
 	re := regexp.MustCompile(`(?P<from>\w+) (?P<to>\w+) time: (?P<duration>\d{2}:\d{2}:\d{2}\.\d{3}) \((?P<ms>\d+)ms\)`)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
@@ -45,13 +46,4 @@ func ParseTransition(s string) (TimeLogEntry, error) {
 		To:       State(matches[2]),
 		Duration: time.Duration(ms) * time.Millisecond,
 	}, nil
-}
-
-func main() {
-	s := "idle busy time: 00:00:02.319 (2319ms)"
-	t, err := ParseTransition(s)
-	if err != nil {
-		log.Fatalf("Error parsing transition: %v", err)
-	}
-	log.Printf("TimeLogEntry: %v", t)
 }
