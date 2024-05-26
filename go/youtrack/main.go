@@ -13,8 +13,15 @@ import (
 )
 
 func logTime(duration time.Duration) {
-	lib.FindMyIssuesInProgress()
-
+	issues, err := lib.FindMyIssuesInProgress()
+	if err != nil {
+		log.Printf("Failed to find my issues in progress: %v", err)
+	}
+	if len(issues) != 1 {
+		log.Printf("Expected to find exactly one issue in progress, but found %d", len(issues))
+		return
+	}
+	lib.TrackTimeForIssue(issues[0].Id, "Logged via Toggle", int(duration.Minutes()))
 }
 
 func handleTimeLogEntry(topic string, message string) {
@@ -37,8 +44,8 @@ func run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-time.Tick(1 * time.Second):
-			fmt.Println("Tick")
+		case <-time.Tick(30 * time.Second):
+			fmt.Println("Keep alive...")
 		case msg := <-messageChannel:
 			handleTimeLogEntry(msg.Topic(), string(msg.Payload()))
 		}
@@ -54,7 +61,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 }
 
-func _main() {
+func main() {
 	initConfig()
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -66,7 +73,13 @@ func _main() {
 	}
 }
 
-func main() {
+func mainSandbox() {
 	initConfig()
-	lib.FindMyIssuesInProgress()
+	issues, err := lib.FindMyIssuesInProgress()
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	for _, issue := range issues {
+		fmt.Printf("Issue: %v\n", issue)
+	}
 }

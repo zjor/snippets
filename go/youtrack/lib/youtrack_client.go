@@ -20,6 +20,10 @@ type Issue struct {
 	Summary string `json:"summary"`
 }
 
+func (i Issue) String() string {
+	return fmt.Sprintf("ID: %s; %s", i.Id, i.Summary)
+}
+
 type Duration struct {
 	Minutes int `json:"minutes"`
 }

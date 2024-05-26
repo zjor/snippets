@@ -31,7 +31,7 @@ func (t TimeLogEntry) String() string {
 // idle busy time: 00:00:02.319 (2319ms)
 // busy idle time: 00:00:03.315 (3315ms)
 func ParseTimeLogEntry(s string) (TimeLogEntry, error) {
-	re := regexp.MustCompile(`(?P<from>\w+) (?P<to>\w+) time: (?P<duration>\d{2}:\d{2}:\d{2}\.\d{3}) \((?P<ms>\d+)ms\)`)
+	re := regexp.MustCompile(`(?P<to>\w+) (?P<from>\w+) time: (?P<duration>\d{2}:\d{2}:\d{2}\.\d{3}) \((?P<ms>\d+)ms\)`)
 	matches := re.FindStringSubmatch(s)
 	if len(matches) == 0 {
 		return TimeLogEntry{}, fmt.Errorf("no matches found")
@@ -42,8 +42,8 @@ func ParseTimeLogEntry(s string) (TimeLogEntry, error) {
 	}
 
 	return TimeLogEntry{
-		From:     State(matches[1]),
-		To:       State(matches[2]),
+		From:     State(matches[2]),
+		To:       State(matches[1]),
 		Duration: time.Duration(ms) * time.Millisecond,
 	}, nil
 }
