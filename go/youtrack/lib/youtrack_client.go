@@ -76,7 +76,8 @@ func FindMyIssuesInProgress() ([]Issue, error) {
 	return issues, nil
 }
 
-func TrackTimeForIssue(id string, text string, durationMinutes int) {
+func TrackTimeForIssue(id string, text string, durationMinutes int) error {
+	log.Printf("Tracking time for issue %s: %s; time: %v", id, text, Duration{Minutes: durationMinutes})
 	uri := fmt.Sprintf("%s/api/issues/%s/timeTracking/workItems", baseURL, id)
 	jsonBody, err := json.Marshal(CreateWorkItemRequest{
 		UsesMarkdown: true,
@@ -86,29 +87,29 @@ func TrackTimeForIssue(id string, text string, durationMinutes int) {
 	})
 
 	if err != nil {
-		log.Fatalf("Error marshalling request body: %v", err)
+		fmt.Errorf("error marshalling request body: %v", err)
 	}
 
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(jsonBody))
 	if err != nil {
-		log.Fatalf("Error creating request: %v", err)
+		fmt.Errorf("error creating request: %v", err)
 	}
 	setHeaders(req)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("Error sending request: %v", err)
+		return fmt.Errorf("error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("Error reading response body: %v\n", err)
-		return
+		return fmt.Errorf("Error reading response body: %v\n", err)
 	}
 
-	fmt.Println(string(body))
+	log.Println(string(body))
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("Error: %v", resp.Status)
+		return fmt.Errorf("error: %v", resp.Status)
 	}
+	return nil
 }

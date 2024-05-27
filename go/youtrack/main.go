@@ -21,7 +21,10 @@ func logTime(duration time.Duration) {
 		log.Printf("Expected to find exactly one issue in progress, but found %d", len(issues))
 		return
 	}
-	lib.TrackTimeForIssue(issues[0].Id, "Logged via Toggle", int(duration.Minutes()))
+	err = lib.TrackTimeForIssue(issues[0].Id, "Logged via Toggle", int(duration.Minutes()))
+	if err != nil {
+		log.Printf("Failed to log time for issue: %v", err)
+	}
 }
 
 func handleTimeLogEntry(topic string, message string) {
@@ -31,13 +34,15 @@ func handleTimeLogEntry(topic string, message string) {
 	}
 	if entry.From == lib.Busy && entry.To == lib.Idle {
 		go logTime(entry.Duration)
+	} else {
+		log.Printf("Ignoring transition: %v", entry)
 	}
 }
 
 func run(ctx context.Context) error {
 	var messageChannel = make(chan mqtt.Message)
-
-	topic := fmt.Sprintf("%s/cube", viper.GetString("TELEGRAM_USER_ID"))
+	topciSuffix := "toggle/101"
+	topic := fmt.Sprintf("%s/%s", viper.GetString("TELEGRAM_USER_ID"), topciSuffix)
 	lib.Subscribe(topic, lib.CreateMessageHandler(messageChannel))
 
 	for {
