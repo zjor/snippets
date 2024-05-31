@@ -2,56 +2,66 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"regexp"
-	"strconv"
-	"time"
+	"strings"
 )
 
-type State string
+var vowels = "aeiou"
+var consonants = "bcdfghjklmnpqrstvwxyz"
 
-const (
-	Idle State = "idle"
-	Busy State = "busy"
-)
-
-type TimeLogEntry struct {
-	From     State
-	To       State
-	Duration time.Duration
-}
-
-func (t TimeLogEntry) String() string {
-	return fmt.Sprintf("%s -> %s time: %s", t.From, t.To, t.Duration)
-}
-
-// Examples:
-// idle busy time: 00:00:02.319 (2319ms)
-// busy idle time: 00:00:03.315 (3315ms)
-
-func ParseTransition(s string) (TimeLogEntry, error) {
-	re := regexp.MustCompile(`(?P<from>\w+) (?P<to>\w+) time: (?P<duration>\d{2}:\d{2}:\d{2}\.\d{3}) \((?P<ms>\d+)ms\)`)
-	matches := re.FindStringSubmatch(s)
-	if len(matches) == 0 {
-		return TimeLogEntry{}, fmt.Errorf("no matches found")
-	}
-	ms, err := strconv.Atoi(matches[4])
-	if err != nil {
-		return TimeLogEntry{}, fmt.Errorf("error parsing ms: %v", err)
+func HandleWord(s string) string {
+	// rule 1
+	r := regexp.MustCompile(fmt.Sprintf("^([%s]|xr|yt).*", vowels))
+	if r.MatchString(s) {
+		return s + "ay"
 	}
 
-	return TimeLogEntry{
-		From:     State(matches[1]),
-		To:       State(matches[2]),
-		Duration: time.Duration(ms) * time.Millisecond,
-	}, nil
+	// rule 3
+	r = regexp.MustCompile(fmt.Sprintf("^([%s]*qu).*", consonants))
+	m := r.FindStringSubmatch(s)
+	if len(m) == 2 {
+		return s[len(m[1]):] + m[1] + "ay"
+	}
+
+	// rule 4
+	r = regexp.MustCompile(fmt.Sprintf("^([%s]+)y.*", consonants))
+	m = r.FindStringSubmatch(s)
+	if len(m) == 2 {
+		return s[len(m[1]):] + m[1] + "ay"
+	}
+
+	// rule 2
+	r = regexp.MustCompile(fmt.Sprintf("^([%s]+).*", consonants))
+	m = r.FindStringSubmatch(s)
+	if len(m) == 2 {
+		return s[len(m[1]):] + m[1] + "ay"
+	}
+	return s
+}
+
+func Sentence(s string) string {
+	words := strings.Split(s, " ")
+
+	for i := 0; i < len(words); i++ {
+		words[i] = HandleWord(words[i])
+	}
+
+	return strings.Join(words, " ")
 }
 
 func main() {
-	s := "idle busy time: 00:00:02.319 (2319ms)"
-	t, err := ParseTransition(s)
-	if err != nil {
-		log.Fatalf("Error parsing transition: %v", err)
-	}
-	log.Printf("TimeLogEntry: %v", t)
+	//println(Sentence("apple"))
+	//println(Sentence("xray"))
+	//println(Sentence("yttria"))
+	//
+	//println(Sentence("pig"))
+	//println(Sentence("chair"))
+	//println(Sentence("thrush"))
+	//println(Sentence("quick"))
+	//println(Sentence("square"))
+	//println(Sentence("my"))
+	//println(Sentence("rhythm"))
+
+	//println(Sentence("therapy"))
+	println(Sentence("quick fast run"))
 }
