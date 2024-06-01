@@ -5,7 +5,7 @@ go 1.21.5
 require (
 	github.com/joho/godotenv v1.5.1
 	github.com/replicate/replicate-go v0.18.1
-	github.com/sashabaranov/go-openai v1.20.4
+	github.com/sashabaranov/go-openai v1.24.1
 	github.com/urfave/cli/v2 v2.27.1
 	golang.org/x/image v0.15.0
 )
