@@ -50,7 +50,6 @@ const Trail = (length, baseColor = [18, 184, 255]) => {
             }
         }
     }
-
 }
 
 /**
