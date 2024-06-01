@@ -14,3 +14,10 @@ The following directories should be present:
 
 ## TODO
 - automatically post flashcard with https://github.com/Davincible/goinsta
+
+## Notes
+
+**Hashtags**
+```
+#Education #Learning #StudyGram #StudyTips #Educational #LearnEveryday #Knowledge #LearnEnglish #EnglishVocabulary #EnglishWords #EdTech #Flashcards #DailyVocabulary #WordOfTheDay #AIArt #DigitalArt
+```

@@ -9,7 +9,7 @@ import (
 	"os"
 )
 
-const TranslatePrompt = `Step 1: Translate the following word: "%[1]s" from %[2]s into %[3]s.
+const TranslatePrompt = `Step 1: Translate the following word: "%[1]s" from %[2]s into %[3]s. Provide 2 or 3 possible translations.
 Step 2: Give an example of a sentence in %[2]s language using this word. The sentence should be no longer that 8 words.
 Step 3: Generate a prompt in English to generate an image that explains this word.
 Output: JSON format with the following keys: ["word", "translation", "example", "image_prompt"].
@@ -25,17 +25,17 @@ const (
 )
 
 type Translation struct {
-	Word        string `json:"word"`
-	Translation string `json:"translation"`
-	Example     string `json:"example"`
-	ImagePrompt string `json:"image_prompt"`
+	Word        string   `json:"word"`
+	Translation []string `json:"translation"`
+	Example     string   `json:"example"`
+	ImagePrompt string   `json:"image_prompt"`
 }
 
 func getOpenAiClient() *openai.Client {
 	return openai.NewClient(os.Getenv("OPEN_AI_API_TOKEN"))
 }
 
-func Translate(what, from, to string) (*Translation, error) {
+func Translate(what string, from, to Language) (*Translation, error) {
 	prompt := fmt.Sprintf(TranslatePrompt, what, from, to)
 
 	client := getOpenAiClient()
@@ -75,7 +75,7 @@ func GenerateImage(prompt string) (string, error) {
 			Model:  openai.CreateImageModelDallE3,
 			Prompt: fmt.Sprintf(GenerateImagePrompt, prompt),
 			N:      1,
-			Size:   "1792x1024",
+			Size:   "1024x1024",
 		})
 
 	if err != nil {

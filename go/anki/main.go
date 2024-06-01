@@ -4,9 +4,7 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/opentype"
-	"golang.org/x/image/math/fixed"
+	draw2 "golang.org/x/image/draw"
 	"image"
 	"image/color"
 	"image/draw"
@@ -18,21 +16,15 @@ import (
 	"os"
 	"os/exec"
 	ai "royz.cc/anki/internal/ai"
+	text2 "royz.cc/anki/internal/drawutils"
 	"strconv"
+	"strings"
 )
 
 const TargetImageWidth = 1080
 const TargetImageHeight = 1080
-const ImageWidth = 936
+const ImageWidth = 752
 const ImageHeight = 752
-
-type FontFamily string
-
-const (
-	NunitoRegular FontFamily = "Nunito-Regular"
-	RobotoRegular            = "Roboto-Regular"
-	RobotoMono               = "RobotoMono-Regular"
-)
 
 var (
 	home, _ = os.UserHomeDir()
@@ -127,65 +119,6 @@ func fill(img *image.RGBA, color color.RGBA) {
 	}
 }
 
-func getFontFace(family FontFamily, size float64) font.Face {
-	f, err := os.ReadFile(fmt.Sprintf("%s/fonts/%s.ttf", baseDir, family))
-	if err != nil {
-		log.Fatal(err)
-	}
-	fnt, err := opentype.Parse(f)
-	if err != nil {
-		log.Fatal(err)
-	}
-	face, err := opentype.NewFace(fnt, &opentype.FaceOptions{
-		Size:    size,
-		DPI:     72,
-		Hinting: font.HintingNone,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	return face
-}
-
-func drawTranslation(img *image.RGBA, word, translation string, fontColor color.RGBA) {
-	str := word + " - " + translation
-
-	fontSize := 50
-	face := getFontFace(RobotoMono, float64(fontSize))
-
-	d := &font.Drawer{
-		Dst:  img,
-		Src:  image.NewUniform(fontColor),
-		Face: face,
-	}
-	w := (d.MeasureString(str)) >> 6
-
-	x, y := (TargetImageWidth-w)/2, ((TargetImageHeight-ImageHeight)/2+fontSize)/2
-	point := fixed.Point26_6{X: x << 6, Y: fixed.Int26_6(y << 6)}
-
-	d.Dot = point
-	d.DrawString(str)
-}
-
-func drawExample(img *image.RGBA, str string, fontColor color.RGBA) {
-
-	fontSize := 40
-	face := getFontFace(NunitoRegular, float64(fontSize))
-
-	d := &font.Drawer{
-		Dst:  img,
-		Src:  image.NewUniform(fontColor),
-		Face: face,
-	}
-	w := (d.MeasureString(str)) >> 6
-
-	x, y := (TargetImageWidth-w)/2, TargetImageHeight-((TargetImageHeight-ImageHeight)/2-fontSize)/2
-	point := fixed.Point26_6{X: x << 6, Y: fixed.Int26_6(y << 6)}
-
-	d.Dot = point
-	d.DrawString(str)
-}
-
 func BuildFlashCard(config FlashCardConfig, outImageFilename string) error {
 	imageFile, err := os.Open(config.ImageLocation)
 	if err != nil {
@@ -198,14 +131,47 @@ func BuildFlashCard(config FlashCardConfig, outImageFilename string) error {
 
 	targetImage := image.NewRGBA(image.Rect(0, 0, TargetImageWidth, TargetImageHeight))
 	fill(targetImage, config.BgColor)
-	imgOffset := image.Point{
-		X: (TargetImageWidth - img.Bounds().Dx()) / 2,
-		Y: (TargetImageHeight - img.Bounds().Dy()) / 2,
-	}
-	draw.Draw(targetImage, img.Bounds().Add(imgOffset), img, image.Point{}, draw.Over)
 
-	drawTranslation(targetImage, config.Word, config.Translation, config.Color)
-	drawExample(targetImage, config.Example, config.Color)
+	scaledImage := image.NewRGBA(image.Rect(0, 0, ImageWidth, ImageHeight))
+	draw2.CatmullRom.Scale(scaledImage, scaledImage.Rect, img, img.Bounds(), draw.Over, nil)
+
+	imgOffset := image.Point{
+		X: (TargetImageWidth - scaledImage.Bounds().Dx()) / 2,
+		Y: (TargetImageHeight - scaledImage.Bounds().Dy()) / 2,
+	}
+
+	draw.Draw(targetImage, scaledImage.Bounds().Add(imgOffset), scaledImage, image.Point{}, draw.Over)
+
+	yMargin := (TargetImageHeight - ImageHeight) / 2
+	text2.DrawText(targetImage, config.Word,
+		text2.Point{
+			X: (TargetImageWidth - ImageWidth) / 2,
+			Y: yMargin * 2 / 5},
+		text2.FontOptions{
+			Family: text2.RobotoMono,
+			Size:   36,
+			Color:  config.Color,
+		}, text2.TopLeft)
+
+	text2.DrawText(targetImage, config.Translation,
+		text2.Point{
+			X: (TargetImageWidth + ImageWidth) / 2,
+			Y: yMargin * 3 / 5},
+		text2.FontOptions{
+			Family: text2.NunitoRegular,
+			Size:   30,
+			Color:  config.Color,
+		}, text2.BottomRight)
+
+	text2.DrawText(targetImage, config.Example,
+		text2.Point{
+			X: TargetImageWidth / 2,
+			Y: TargetImageHeight - (yMargin / 2)},
+		text2.FontOptions{
+			Family: text2.NunitoRegular,
+			Size:   36,
+			Color:  config.Color,
+		}, text2.Center)
 
 	outImageFile, err := os.Create(outImageFilename)
 	if err != nil {
@@ -220,7 +186,7 @@ func BuildFlashCard(config FlashCardConfig, outImageFilename string) error {
 
 func RunPipeline(word string) {
 	fmt.Println("translating...")
-	t, err := ai.Translate(word, "en", "ru")
+	t, err := ai.Translate(word, ai.English, ai.Russian)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -243,7 +209,7 @@ func RunPipeline(word string) {
 
 	err = BuildFlashCard(FlashCardConfig{
 		Word:          word,
-		Translation:   t.Translation,
+		Translation:   strings.Join(t.Translation, ", "),
 		Example:       t.Example,
 		ImageLocation: imageLocation,
 		BgColor:       randomColor(),
@@ -266,7 +232,7 @@ func verifyEnv() {
 	}
 }
 
-func main() {
+func main_1() {
 	verifyEnv()
 	app := &cli.App{
 		Action: func(ctx *cli.Context) error {
@@ -284,7 +250,14 @@ func main() {
 	}
 }
 
-/*
-- store images, fonts in user's folder
-- install
-*/
+// sandbox
+func main() {
+	BuildFlashCard(FlashCardConfig{
+		Word:          "perpetuate",
+		Translation:   "увековечивать, сохранять, поддерживать",
+		Example:       "They perpetuate the old traditions.",
+		ImageLocation: "/Users/zjor/.anki/images/perpetuate.png",
+		BgColor:       randomColor(),
+		Color:         color.RGBA{A: 255},
+	}, "out.png")
+}
