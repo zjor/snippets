@@ -223,7 +223,7 @@ func RunPipeline(word string) {
 }
 
 func verifyEnv() {
-	vars := []string{"OPEN_AI_API_TOKEN", "REPLICATE_API_TOKEN"}
+	vars := []string{"OPEN_AI_API_TOKEN"}
 	for _, v := range vars {
 		_, set := os.LookupEnv(v)
 		if !set {
@@ -232,7 +232,7 @@ func verifyEnv() {
 	}
 }
 
-func main_1() {
+func main() {
 	verifyEnv()
 	app := &cli.App{
 		Action: func(ctx *cli.Context) error {
@@ -251,7 +251,7 @@ func main_1() {
 }
 
 // sandbox
-func main() {
+func main_sandbox() {
 	BuildFlashCard(FlashCardConfig{
 		Word:          "perpetuate",
 		Translation:   "увековечивать, сохранять, поддерживать",
