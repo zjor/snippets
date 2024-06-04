@@ -61,5 +61,8 @@ func main() {
 		Notes:    strings.Join(invoiceData.Notes, "\n"),
 		Items:    invoiceData.toClientItems(),
 	}
-	invoice.Create(fmt.Sprintf("./ad-%s.pdf", invoiceNumber))
+
+	path := "/Users/zjor/projects/ion/accounting/2024/may/two"
+	saveTo := fmt.Sprintf("%s/ad-%s.pdf", path, invoiceNumber)
+	invoice.Create(saveTo)
 }
