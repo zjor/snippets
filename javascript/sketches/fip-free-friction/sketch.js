@@ -13,6 +13,7 @@ const DARK_GREEN = '#017A02'
 const BLUE = '#12B8FF' // rgb(18, 184, 255)
 const DARK_BLUE = '#0C88B2'
 const ROSE = '#FD4499'
+const ORANGE = '#FFA500'
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
 
@@ -173,6 +174,43 @@ function integrate(t, dt) {
     }
 }
 
+/**
+ * Sandbox scene
+ * @param c {CanvasRenderingContext2D}
+ * @param width {Number}
+ * @param height {Number}
+ */
+function renderSandbox(c, width, height) {
+    const r1 = 50
+    const r2 = 90
+    const d = r1+ r2 + 50
+    const h = 100
+
+    const origin = [width / 2, height / 2]
+    c.strokeStyle = ORANGE
+    c.lineWidth = 4
+
+    c.beginPath()
+    c.ellipse(...origin, r1, r1, 0, 0, 2 * pi)
+    c.stroke()
+
+    c.beginPath()
+    c.ellipse(origin[0] + d, origin[1], r2, r2, 0, 0, 2 * pi)
+    c.stroke()
+
+    const arcOrigin = [
+        (d + r1 - r2) / 2 + origin[0],
+        h + origin[1]
+    ]
+
+    const arcR = sqrt((origin[0] - arcOrigin[0]) ** 2 + (origin[1] - arcOrigin[1]) ** 2) - r1
+    c.beginPath()
+    c.arc(...arcOrigin, arcR, 0, pi, true)
+    c.stroke()
+
+
+}
+
 const sketch = ({canvas}) => {
     t = Date.now()
     return ({context: c, width, height}) => {
@@ -183,11 +221,13 @@ const sketch = ({canvas}) => {
         c.fillStyle = '#000'
         c.fillRect(0, 0, width, height)
 
-        render(c, width, height)
+        renderSandbox(c, width, height)
 
-        if (!paused) {
-            integrate(t, dt)
-        }
+        // render(c, width, height)
+        //
+        // if (!paused) {
+        //     integrate(t, dt)
+        // }
     }
 }
 
