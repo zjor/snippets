@@ -22,8 +22,8 @@ let paused = true
 const g = 9.81
 
 const m1 = 0.9
-const m2 = 2.0
-const r = 0.4
+const m2 = 3.0
+const r = 0.6
 const l = 1.25
 const J = m2 * r ** 2
 const b = 0.9
@@ -80,6 +80,46 @@ function renderCentroid(c, x, y, r, phi) {
 /**
  *
  * @param c {CanvasRenderingContext2D}
+ * @param l {Number}
+ * @param angle {Number}
+ */
+function renderPendulumBody(c, l, angle) {
+    const r1 = 75
+    const r2 = 50
+    const r = 1.3 * l
+
+    const x = l / 2 + (r1 - r2) * (r1 + r2 + 2 * r) / (2 * l)
+    const y = sqrt((r1 + r) ** 2 - x ** 2)
+
+    const a = Math.atan(y / x)
+    const b = Math.atan(y / (l - x))
+
+    c.strokeStyle = ORANGE
+    c.lineWidth = 4
+
+    c.save()
+    c.rotate(angle)
+
+    c.beginPath()
+    c.ellipse(0, 0, r1, r1, 0, a, -a)
+    c.arc(x, -y, r, pi-a, b, true)
+    c.ellipse(l, 0, r2, r2, 0, b - pi, pi - b)
+    c.arc(x, y, r, -b, a - pi, true)
+    c.fillStyle = BLACK
+    c.fill()
+    c.stroke()
+
+    c.beginPath()
+    c.ellipse(0, 0, r1 * 0.7, r1 * 0.7, 0, 0, 2 * pi)
+    c.lineWidth = 2.0
+    c.stroke()
+
+    c.restore()
+}
+
+/**
+ *
+ * @param c {CanvasRenderingContext2D}
  * @param x {Number}
  * @param y {Number}
  * @param scale {Number}
@@ -121,29 +161,30 @@ function renderWheel(c, x, y, scale) {
 function render(c, width, height) {
     const origin = [width / 2, height / 2]
     const scale = width / 4
+    const L = l * scale
 
     const [x, y] = [
-        l * sin(th) * scale + origin[0],
-        -l * cos(th) * scale + origin[1]
+        L * sin(th),
+        -L * cos(th)
     ]
 
-    c.strokeStyle = BLUE
-    c.lineWidth = 6.0
-    c.beginPath()
-    c.moveTo(...origin)
-    c.lineTo(x, y)
-    c.stroke()
+    c.save()
+    c.translate(...origin)
 
     c.strokeStyle = BLUE
     c.lineWidth = 4.0
     c.beginPath()
-    c.moveTo(origin[0] - scale, origin[1])
-    c.lineTo(origin[0] + scale, origin[1])
+    c.moveTo(-scale, 0)
+    c.lineTo(scale, 0)
     c.stroke()
 
-    renderCentroid(c, ...origin, 20, th)
+    renderPendulumBody(c, L, th - pi / 2)
+
+    renderCentroid(c, 0, 0, 20, th)
 
     renderWheel(c, x, y, scale)
+
+    c.restore()
 }
 
 /**
@@ -179,36 +220,36 @@ function integrate(t, dt) {
  * @param c {CanvasRenderingContext2D}
  * @param width {Number}
  * @param height {Number}
+ * @param l {Number}
+ * @param angle {Number}
  */
-function renderSandbox(c, width, height) {
+function renderSandbox(c, width, height, l, angle) {
     const r1 = 50
-    const r2 = 90
-    const d = r1+ r2 + 50
-    const h = 100
+    const r2 = 75
+    const r = 100
+
+    const x = l / 2 + (r1 - r2) * (r1 + r2 + 2 * r) / (2 * l)
+    const y = sqrt((r1 + r) ** 2 - x ** 2)
+
+    const a = Math.atan(y / x)
+    const b = Math.atan(y / (l - x))
 
     const origin = [width / 2, height / 2]
     c.strokeStyle = ORANGE
     c.lineWidth = 4
 
-    c.beginPath()
-    c.ellipse(...origin, r1, r1, 0, 0, 2 * pi)
-    c.stroke()
+    c.save()
+    c.translate(...origin)
+    c.rotate(angle)
 
     c.beginPath()
-    c.ellipse(origin[0] + d, origin[1], r2, r2, 0, 0, 2 * pi)
+    c.ellipse(0, 0, r1, r1, 0, a, -a)
+    c.arc(x, -y, r, pi-a, b, true)
+    c.ellipse(l, 0, r2, r2, 0, b - pi, pi - b)
+    c.arc(x, y, r, -b, a - pi, true)
     c.stroke()
 
-    const arcOrigin = [
-        (d + r1 - r2) / 2 + origin[0],
-        h + origin[1]
-    ]
-
-    const arcR = sqrt((origin[0] - arcOrigin[0]) ** 2 + (origin[1] - arcOrigin[1]) ** 2) - r1
-    c.beginPath()
-    c.arc(...arcOrigin, arcR, 0, pi, true)
-    c.stroke()
-
-
+    c.restore()
 }
 
 const sketch = ({canvas}) => {
@@ -221,13 +262,13 @@ const sketch = ({canvas}) => {
         c.fillStyle = '#000'
         c.fillRect(0, 0, width, height)
 
-        renderSandbox(c, width, height)
+        // renderSandbox(c, width, height, 150, pi/3)
 
-        // render(c, width, height)
-        //
-        // if (!paused) {
-        //     integrate(t, dt)
-        // }
+        render(c, width, height)
+
+        if (!paused) {
+            integrate(t, dt)
+        }
     }
 }
 
