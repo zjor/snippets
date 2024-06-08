@@ -3,10 +3,11 @@ const {PI: pi, cos, sin, sqrt} = Math
 const {Vector} = require('./geometry')
 const {integrateRK4} = require('./ode')
 const DxfParser = require('dxf-parser')
+const {renderDxf} = require('./dxfutil')
 
 const settings = {
     dimensions: [1080, 1080],
-    animate: false
+    animate: true
 }
 const BLACK = '#000'
 const GREEN = '#01DC03' // rgb(1, 220, 3)
@@ -14,7 +15,7 @@ const DARK_GREEN = '#017A02'
 const BLUE = '#12B8FF' // rgb(18, 184, 255)
 const DARK_BLUE = '#0C88B2'
 const ROSE = '#FD4499'
-const ORANGE = '#FFA500'
+const ORANGE = '#FFA500' // rgb(255, 165, 0)
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
 
@@ -85,8 +86,8 @@ function renderCentroid(c, x, y, r, phi) {
  * @param angle {Number}
  */
 function renderPendulumBody(c, l, angle) {
-    const r1 = 75
-    const r2 = 50
+    const r1 = 50
+    const r2 = 60
     const r = 1.3 * l
 
     const x = l / 2 + (r1 - r2) * (r1 + r2 + 2 * r) / (2 * l)
@@ -103,7 +104,7 @@ function renderPendulumBody(c, l, angle) {
 
     c.beginPath()
     c.ellipse(0, 0, r1, r1, 0, a, -a)
-    c.arc(x, -y, r, pi-a, b, true)
+    c.arc(x, -y, r, pi - a, b, true)
     c.ellipse(l, 0, r2, r2, 0, b - pi, pi - b)
     c.arc(x, y, r, -b, a - pi, true)
     c.fillStyle = BLACK
@@ -123,33 +124,30 @@ function renderPendulumBody(c, l, angle) {
  * @param c {CanvasRenderingContext2D}
  * @param x {Number}
  * @param y {Number}
- * @param scale {Number}
  */
-function renderWheel(c, x, y, scale) {
-    const _r = scale * r
-    c.strokeStyle = BLUE
-    c.lineWidth = 6.0
-    c.beginPath()
-    c.ellipse(x, y, _r, _r, 0, 0, 2 * pi)
-    c.stroke()
+function renderWheel(c, x, y) {
+    c.save()
+    c.translate(x, y)
+    c.rotate(phi - th0 / 2)
 
-    const vs = []
-    for (let i = 0; i < 4; i++) {
-        vs.push([
-            x + _r * cos(i * pi / 2 + phi - th0 / 2),
-            y + _r * sin(i * pi / 2 + phi - th0 / 2)
-        ])
-    }
+    const path = new Path2D()
+    const outerRadius = 180
+    path.ellipse(0, 0, outerRadius, outerRadius, 0, 0, 2 * pi, true)
+    const piePath = getPiePath()
+    path.addPath(piePath)
+    path.addPath(piePath, (new DOMMatrix()).rotate(90))
+    path.addPath(piePath, (new DOMMatrix()).rotate(180))
+    path.addPath(piePath, (new DOMMatrix()).rotate(270))
 
-    c.lineWidth = 3.0
-    for (let v of vs) {
-        c.beginPath()
-        c.moveTo(x, y)
-        c.lineTo(...v)
-        c.stroke()
-    }
+    c.fillStyle = BLACK
+    c.fill(path, 'nonzero')
+    c.strokeStyle = ORANGE
+    c.lineWidth = 4.0
+    c.stroke(path)
 
-    renderCentroid(c, x, y, 20, phi - th0 / 2)
+    c.restore()
+
+    renderCentroid(c, x, y, 20, -th0 / 2)
 
 }
 
@@ -183,7 +181,7 @@ function render(c, width, height) {
 
     renderCentroid(c, 0, 0, 20, th)
 
-    renderWheel(c, x, y, scale)
+    renderWheel(c, x, y)
 
     c.restore()
 }
@@ -217,6 +215,29 @@ function integrate(t, dt) {
 }
 
 /**
+ * Draws pie A
+ * @return {Path2D}
+ */
+function getPiePath() {
+    const path = new Path2D();
+
+    path.moveTo(-10, 45.8257569)
+    path.lineTo(-10, 136.7479433)
+
+    path.arc(-30, 136.747943311, 20, 0, 1.7867568)
+    path.arc(0, 0, 160, 1.7867568, 2.9256321)
+    path.arc(-136.7479433, 30, 20, 2.9256321, 4.7123889)
+
+    path.lineTo(-45.8257569, 10)
+
+    path.arc(-45.8257569, 20, 10, 4.7123889, 5.8716684)
+    path.arc(0, 0, 40, 2.7300758, 1.9823131, true)
+    path.arc(-20, 45.8257569, 10, 5.1239058, 0)
+    path.closePath()
+    return path
+}
+
+/**
  * Sandbox scene
  * @param c {CanvasRenderingContext2D}
  * @param width {Number}
@@ -229,41 +250,29 @@ function renderSandbox(c, width, height) {
 
     const origin = [width / 2, height / 2]
     c.strokeStyle = ORANGE
-    c.lineWidth = 1
+    c.lineWidth = 2
 
     c.save()
     c.translate(...origin)
-    c.scale(4, 4)
 
-    for (const e of dxfModel.entities) {
-        console.log(e)
-        if (e.type === "CIRCLE") {
-            const {x, y} = e.center
-            const {radius: r} = e
-            c.beginPath()
-            c.ellipse(x, y, r, r, 0, 0, 2 * pi)
-            c.stroke()
-        } else if (e.type === "LINE") {
-            const vs = e.vertices
-            c.beginPath()
-            c.moveTo(vs[0].x, vs[0].y)
-            for (let i = 1; i < vs.length; i++) {
-                c.lineTo(vs[i].x, vs[i].y)
-            }
-            c.stroke()
-            c.closePath()
-        } else if (e.type === "ARC") {
-            const {x, y} = e.center
-            const {radius, startAngle, endAngle} = e
-            c.beginPath()
-            c.arc(x, y, radius, startAngle, endAngle)
-            c.stroke()
-        }
-    }
+    c.fillStyle = 'rgba(255, 165, 0, 0.5)'
+
+    const path = new Path2D()
+    const outerRadius = 180
+    path.ellipse(0, 0, outerRadius, outerRadius, 0, 0, 2 * pi, true)
+    const piePath = getPiePath()
+    path.addPath(piePath)
+    path.addPath(piePath, (new DOMMatrix()).rotate(90))
+    path.addPath(piePath, (new DOMMatrix()).rotate(180))
+    path.addPath(piePath, (new DOMMatrix()).rotate(270))
+    c.stroke(path)
+    c.fill(path, 'nonzero')
+
     c.restore()
 }
 
 const dxfParser = new DxfParser()
+
 async function parseDxfModel(uri) {
     const response = await fetch(uri)
     const data = await response.text()
@@ -282,26 +291,27 @@ const sketch = ({canvas}) => {
         c.fillStyle = '#000'
         c.fillRect(0, 0, width, height)
 
-        renderSandbox(c, width, height)
+        // renderSandbox(c, width, height)
 
-        // render(c, width, height)
-        //
-        // if (!paused) {
-        //     integrate(t, dt)
-        // }
+        render(c, width, height)
+
+        if (!paused) {
+            integrate(t, dt)
+        }
     }
 }
 
+canvasSketch(sketch, settings)
 
 
 window.addEventListener('click', _ => paused = !paused)
 
-window.addEventListener('load', async () => {
-    // const dxfFilename = "/models/circle.dxf"
-    const dxfFilename = "/models/wheel.dxf"
-    dxfModel = await parseDxfModel(dxfFilename)
-    console.log(dxfModel)
-
-    canvasSketch(sketch, settings)
-
-})
+// window.addEventListener('load', async () => {
+//     // const dxfFilename = "/models/circle.dxf"
+//     // const dxfFilename = "/models/wheel.dxf"
+//     const dxfFilename = "/models/pie.dxf"
+//     dxfModel = await parseDxfModel(dxfFilename)
+//     console.log(dxfModel)
+//
+//
+// })
