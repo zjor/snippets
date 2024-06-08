@@ -2,8 +2,6 @@ const canvasSketch = require('canvas-sketch')
 const {PI: pi, cos, sin, sqrt} = Math
 const {Vector} = require('./geometry')
 const {integrateRK4} = require('./ode')
-const DxfParser = require('dxf-parser')
-const {renderDxf} = require('./dxfutil')
 
 const settings = {
     dimensions: [1080, 1080],
@@ -28,7 +26,7 @@ const m2 = 3.0
 const r = 0.6
 const l = 1.25
 const J = m2 * r ** 2
-const b = 0.9
+const b = 1.5
 
 const th0 = pi / 6
 let th = th0
@@ -96,7 +94,7 @@ function renderPendulumBody(c, l, angle) {
     const a = Math.atan(y / x)
     const b = Math.atan(y / (l - x))
 
-    c.strokeStyle = ORANGE
+    c.strokeStyle = BLUE
     c.lineWidth = 4
 
     c.save()
@@ -141,7 +139,7 @@ function renderWheel(c, x, y) {
 
     c.fillStyle = BLACK
     c.fill(path, 'nonzero')
-    c.strokeStyle = ORANGE
+    c.strokeStyle = GREEN
     c.lineWidth = 4.0
     c.stroke(path)
 
@@ -149,6 +147,33 @@ function renderWheel(c, x, y) {
 
     renderCentroid(c, x, y, 20, -th0 / 2)
 
+}
+
+/**
+ *
+ * @param c {CanvasRenderingContext2D}
+ * @param scale {Number}
+ */
+function renderBase(c, scale) {
+    const d = 140
+    const corner = 30
+    c.strokeStyle = PINK
+    c.lineWidth = 4.0
+
+    const path = new Path2D()
+    path.moveTo(-d / 2, d / 2)
+    path.lineTo(-d / 2, -d / 2 + corner)
+    path.lineTo(-d / 2 + corner, -d / 2)
+    path.lineTo(d / 2 - corner, -d / 2)
+    path.lineTo(d / 2, -d / 2 + corner)
+    path.lineTo(d / 2, d / 2)
+    path.closePath()
+    c.stroke(path)
+
+    c.beginPath()
+    c.moveTo(-scale, d / 2)
+    c.lineTo(scale, d / 2)
+    c.stroke()
 }
 
 /**
@@ -170,17 +195,9 @@ function render(c, width, height) {
     c.save()
     c.translate(...origin)
 
-    c.strokeStyle = BLUE
-    c.lineWidth = 4.0
-    c.beginPath()
-    c.moveTo(-scale, 0)
-    c.lineTo(scale, 0)
-    c.stroke()
-
+    renderBase(c, scale)
     renderPendulumBody(c, L, th - pi / 2)
-
     renderCentroid(c, 0, 0, 20, th)
-
     renderWheel(c, x, y)
 
     c.restore()
@@ -271,16 +288,6 @@ function renderSandbox(c, width, height) {
     c.restore()
 }
 
-const dxfParser = new DxfParser()
-
-async function parseDxfModel(uri) {
-    const response = await fetch(uri)
-    const data = await response.text()
-    return dxfParser.parseSync(data)
-}
-
-let dxfModel = undefined
-
 const sketch = ({canvas}) => {
     t = Date.now()
     return ({context: c, width, height}) => {
@@ -306,12 +313,21 @@ canvasSketch(sketch, settings)
 
 window.addEventListener('click', _ => paused = !paused)
 
+// const DxfParser = require('dxf-parser')
+// const {renderDxf} = require('./dxfutil')
+
+// const dxfParser = new DxfParser()
+//
+// async function parseDxfModel(uri) {
+//     const response = await fetch(uri)
+//     const data = await response.text()
+//     return dxfParser.parseSync(data)
+// }
+
+// let dxfModel = undefined
+
 // window.addEventListener('load', async () => {
-//     // const dxfFilename = "/models/circle.dxf"
-//     // const dxfFilename = "/models/wheel.dxf"
 //     const dxfFilename = "/models/pie.dxf"
 //     dxfModel = await parseDxfModel(dxfFilename)
 //     console.log(dxfModel)
-//
-//
 // })
