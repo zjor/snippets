@@ -7,6 +7,12 @@ createApp({
 
     const sketchItems = [
       {
+        href: `${URL_PREFIX}/dist/sketches/free-fip-friction.html`,
+        img: `${URL_PREFIX}/images/free-fip-friction-preview.png`,
+        alt: 'free-fip-friction-preview',
+        description: 'Free FIP'
+      },
+      {
         href: `${URL_PREFIX}/dist/sketches/octopus.html`,
         img: `${URL_PREFIX}/images/energy-octopus-preview.png`,
         alt: 'energy-octopus-preview',
@@ -24,7 +30,6 @@ createApp({
         alt: 'spring-pendulum-preview',
         description: 'Spring Pendulum'
       },
-
     ]
 
     const ccItems = [
