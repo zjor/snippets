@@ -2,10 +2,11 @@ const canvasSketch = require('canvas-sketch')
 const {PI: pi, cos, sin, sqrt} = Math
 const {Vector} = require('./geometry')
 const {integrateRK4} = require('./ode')
+const DxfParser = require('dxf-parser')
 
 const settings = {
     dimensions: [1080, 1080],
-    animate: true
+    animate: false
 }
 const BLACK = '#000'
 const GREEN = '#01DC03' // rgb(1, 220, 3)
@@ -220,37 +221,56 @@ function integrate(t, dt) {
  * @param c {CanvasRenderingContext2D}
  * @param width {Number}
  * @param height {Number}
- * @param l {Number}
- * @param angle {Number}
  */
-function renderSandbox(c, width, height, l, angle) {
-    const r1 = 50
-    const r2 = 75
-    const r = 100
-
-    const x = l / 2 + (r1 - r2) * (r1 + r2 + 2 * r) / (2 * l)
-    const y = sqrt((r1 + r) ** 2 - x ** 2)
-
-    const a = Math.atan(y / x)
-    const b = Math.atan(y / (l - x))
+function renderSandbox(c, width, height) {
+    if (!dxfModel) {
+        return
+    }
 
     const origin = [width / 2, height / 2]
     c.strokeStyle = ORANGE
-    c.lineWidth = 4
+    c.lineWidth = 1
 
     c.save()
     c.translate(...origin)
-    c.rotate(angle)
+    c.scale(4, 4)
 
-    c.beginPath()
-    c.ellipse(0, 0, r1, r1, 0, a, -a)
-    c.arc(x, -y, r, pi-a, b, true)
-    c.ellipse(l, 0, r2, r2, 0, b - pi, pi - b)
-    c.arc(x, y, r, -b, a - pi, true)
-    c.stroke()
-
+    for (const e of dxfModel.entities) {
+        console.log(e)
+        if (e.type === "CIRCLE") {
+            const {x, y} = e.center
+            const {radius: r} = e
+            c.beginPath()
+            c.ellipse(x, y, r, r, 0, 0, 2 * pi)
+            c.stroke()
+        } else if (e.type === "LINE") {
+            const vs = e.vertices
+            c.beginPath()
+            c.moveTo(vs[0].x, vs[0].y)
+            for (let i = 1; i < vs.length; i++) {
+                c.lineTo(vs[i].x, vs[i].y)
+            }
+            c.stroke()
+            c.closePath()
+        } else if (e.type === "ARC") {
+            const {x, y} = e.center
+            const {radius, startAngle, endAngle} = e
+            c.beginPath()
+            c.arc(x, y, radius, startAngle, endAngle)
+            c.stroke()
+        }
+    }
     c.restore()
 }
+
+const dxfParser = new DxfParser()
+async function parseDxfModel(uri) {
+    const response = await fetch(uri)
+    const data = await response.text()
+    return dxfParser.parseSync(data)
+}
+
+let dxfModel = undefined
 
 const sketch = ({canvas}) => {
     t = Date.now()
@@ -262,17 +282,26 @@ const sketch = ({canvas}) => {
         c.fillStyle = '#000'
         c.fillRect(0, 0, width, height)
 
-        // renderSandbox(c, width, height, 150, pi/3)
+        renderSandbox(c, width, height)
 
-        render(c, width, height)
-
-        if (!paused) {
-            integrate(t, dt)
-        }
+        // render(c, width, height)
+        //
+        // if (!paused) {
+        //     integrate(t, dt)
+        // }
     }
 }
 
 
-canvasSketch(sketch, settings)
 
 window.addEventListener('click', _ => paused = !paused)
+
+window.addEventListener('load', async () => {
+    // const dxfFilename = "/models/circle.dxf"
+    const dxfFilename = "/models/wheel.dxf"
+    dxfModel = await parseDxfModel(dxfFilename)
+    console.log(dxfModel)
+
+    canvasSketch(sketch, settings)
+
+})

@@ -8,6 +8,9 @@ dependencies:
   canvas-sketch:
     specifier: ^0.7.7
     version: 0.7.7
+  dxf-parser:
+    specifier: ^1.1.2
+    version: 1.1.2
 
 packages:
 
@@ -79,6 +82,12 @@ packages:
 
   /defined@1.0.1:
     resolution: {integrity: sha512-hsBd2qSVCRE+5PmNdHt1uzyrFu5d3RwmFDKzyNZMFq/EwDNJF7Ee5+D5oEKF0hU6LhtoUF1macFvOe4AskQC1Q==}
+    dev: false
+
+  /dxf-parser@1.1.2:
+    resolution: {integrity: sha512-GPTumUvRkounlIazLIyJMmTWt+nlg+ksS0Hdm8jWvejmZKBTz6gvHTam76wRm4PQMma5sgKLThblQyeIJcH79Q==}
+    dependencies:
+      loglevel: 1.9.1
     dev: false
 
   /es-define-property@1.0.0:
@@ -196,6 +205,11 @@ packages:
 
   /is-window@1.0.2:
     resolution: {integrity: sha512-uj00kdXyZb9t9RcAUAwMZAnkBUwdYGhYlt7djMXhfyhUCzwNba50tIiBKR7q0l7tdoBtFVw/3JmLY6fI3rmZmg==}
+    dev: false
+
+  /loglevel@1.9.1:
+    resolution: {integrity: sha512-hP3I3kCrDIMuRwAwHltphhDM1r8i55H33GgqjXbrisuJhF4kRhW1dNuxsRklp4bXl8DSdLaNLuiL4A/LWRfxvg==}
+    engines: {node: '>= 0.6.0'}
     dev: false
 
   /object-assign@4.1.1:
