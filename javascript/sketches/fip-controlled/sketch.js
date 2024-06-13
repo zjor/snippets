@@ -144,7 +144,7 @@ function renderWheel(c, x, y) {
 
     c.restore()
 
-    renderCentroid(c, x, y, 20, -th0 / 2)
+    renderCentroid(c, x, y, 20, -th0 / 2 + phi)
 
 }
 
@@ -211,7 +211,7 @@ function render(c, width, height) {
  */
 function derive(state, t, dt) {
     const [_th, _dth, _phi, _dphi] = state
-    const control = 2.0 * sin(t / 1300)
+    const control = 3.0 * sin(t / 1700)
 
     ddth = (control - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
     ddphi = control / J
@@ -306,6 +306,5 @@ const sketch = ({canvas}) => {
 }
 
 canvasSketch(sketch, settings)
-
 
 window.addEventListener('click', _ => paused = !paused)
