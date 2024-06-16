@@ -12,6 +12,7 @@ Let's rewrite the system in the following form:
 $\boldsymbol{\dot{x}} = A\boldsymbol{x}+B\boldsymbol{u}$
 
 Let
+
 $$
 \begin{array}{rcl}
 \alpha = \frac{\frac{1}{3}m_1l^2+m_2l^2+J}{J} \\
