@@ -13,6 +13,7 @@ const DARK_GREEN = '#017A02'
 const BLUE = '#12B8FF' // rgb(18, 184, 255)
 const DARK_BLUE = '#0C88B2'
 const ROSE = '#FD4499'
+const RED = '#CF0000'
 const ORANGE = '#FFA500' // rgb(255, 165, 0)
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
@@ -176,6 +177,18 @@ function renderBase(c, scale) {
     c.stroke()
 }
 
+function renderDisturbance(c, width, height) {
+    const xOffset = 3 / 8 * width
+    const yOffset = 3 / 8 * height
+    c.beginPath()
+    c.moveTo(-xOffset, -yOffset)
+    c.lineTo(-xOffset, -yOffset + 150)
+    c.lineTo(-xOffset + 50, -yOffset + 75)
+    c.closePath()
+    c.fillStyle = RED
+    c.fill()
+}
+
 /**
  *
  * @param c {CanvasRenderingContext2D}
@@ -195,6 +208,7 @@ function render(c, width, height) {
     c.save()
     c.translate(...origin)
 
+    renderDisturbance(c, width, height)
     renderBase(c, scale)
     renderPendulumBody(c, L, th - pi / 2)
     renderCentroid(c, 0, 0, 20, th)
@@ -205,7 +219,15 @@ function render(c, width, height) {
 
 const disturbance = {
     endsAt: 0,
-    value: 0
+    value: 0,
+    nextFrame: 57,
+    update(t, dt, frame) {
+        if (frame % this.nextFrame == 0) {
+            this.endsAt = t + Math.random() * 50 * dt
+            this.value = (Math.random() - 0.5) * 200.0
+            this.nextFrame = Math.floor(10 + 100 * Math.random())
+        }
+    }
 }
 
 /**
@@ -308,13 +330,8 @@ const sketch = ({canvas}) => {
 
         render(c, width, height)
 
-        if (frame % 57 == 0) {
-            disturbance.endsAt = t + 10 * dt
-            disturbance.value = (Math.random() - 0.5) * 100.0
-            console.log('Disturbance: ', disturbance)
-        }
-
         if (!paused) {
+            disturbance.update(t, dt, frame)
             integrate(t, dt)
         }
     }
@@ -323,3 +340,15 @@ const sketch = ({canvas}) => {
 canvasSketch(sketch, settings)
 
 window.addEventListener('click', _ => paused = !paused)
+
+/*
+TODO:
+- keep track of disturbance history
+- face away the triangle
+- scale the triangle according to the force
+- face speed ~ the duration of action
+
+---
+
+- plot graphs of system state (th, dth, dphi, control)
+ */
