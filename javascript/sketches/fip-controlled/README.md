@@ -23,6 +23,7 @@ The equation of motion will turn into:
 $\alpha\ddot{\theta}+\beta sin{\theta}=-\ddot{\phi}$
 
 Let's rewrite the equation in linearised first-order form:
+
 $$
 \begin{cases}
 \dot{\theta}=\omega \\
@@ -33,6 +34,7 @@ $$
 $$
 
 Thus,
+
 $$
 A =
 \begin{bmatrix}
@@ -50,6 +52,7 @@ A =
 $$
 
 Controllability matrix:
+
 $$
 Q=[B\ AB\ A^2B\ A^3B]=\begin{bmatrix}
 0 & -\frac{1}{\alpha} & 0 & \frac{\beta}{\alpha^2}\\
