@@ -21,13 +21,14 @@ let paused = true
 
 const g = 9.81
 
-const m1 = 0.9
-const m2 = 3.0
-const r = 0.6
-const l = 1.25
-const J = m2 * r ** 2
 
-const th0 = pi
+const m1 = 0.9  // mass of the rod
+const m2 = 3.0  // mass of the wheel
+const r = 0.6   // radius of the wheel
+const l = 1.25  // length of the rod
+const J = m2 * r ** 2   // momentum of inertia of the wheel
+
+const th0 = pi / 6
 let th = th0
 let dth = .0
 let phi = .0
@@ -211,7 +212,7 @@ function render(c, width, height) {
  */
 function derive(state, t, dt) {
     const [_th, _dth, _phi, _dphi] = state
-    const control = 3.0 * sin(t / 1700)
+    const control = -(195 * _th + 100 * _dth - 10 * _dphi)
 
     ddth = (control - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
     ddphi = control / J
