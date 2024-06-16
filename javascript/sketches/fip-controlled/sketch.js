@@ -203,6 +203,11 @@ function render(c, width, height) {
     c.restore()
 }
 
+const disturbance = {
+    endsAt: 0,
+    value: 0
+}
+
 /**
  *
  * @param state {Array<Number>}
@@ -214,7 +219,9 @@ function derive(state, t, dt) {
     const [_th, _dth, _phi, _dphi] = state
     const control = -(195 * _th + 100 * _dth - 10 * _dphi)
 
-    ddth = (control - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
+    const kick = disturbance.endsAt > t ? disturbance.value : 0
+
+    ddth = (control + kick - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
     ddphi = control / J
     return [_dth, ddth, _dphi, ddphi]
 }
@@ -286,9 +293,10 @@ function renderSandbox(c, width, height) {
     c.restore()
 }
 
+let t = Date.now()
+
 const sketch = ({canvas}) => {
-    t = Date.now()
-    return ({context: c, width, height}) => {
+    return ({context: c, width, height, frame}) => {
         const now = Date.now()
         const dt = (now - t) / 1000
         t = now
@@ -299,6 +307,12 @@ const sketch = ({canvas}) => {
         // renderSandbox(c, width, height)
 
         render(c, width, height)
+
+        if (frame % 57 == 0) {
+            disturbance.endsAt = t + 10 * dt
+            disturbance.value = (Math.random() - 0.5) * 100.0
+            console.log('Disturbance: ', disturbance)
+        }
 
         if (!paused) {
             integrate(t, dt)
