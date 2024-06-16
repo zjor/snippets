@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "lqr-solver"
+version = "0.1.0"
+description = ""
+authors = ["Sergey Royz <zjor.se@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11.8"
+scipy = "^1.13.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
