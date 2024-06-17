@@ -35,6 +35,75 @@ let dth = .0
 let phi = .0
 let dphi = .0
 
+const DisturbanceHistory = () => {
+    let items = []
+
+    const renderLeftDisturbance = (c, width, height, opacity) => {
+        const xOffset = 3 / 8 * width
+        const yOffset = 3 / 8 * height
+        c.beginPath()
+        c.moveTo(-xOffset, -yOffset)
+        c.lineTo(-xOffset, -yOffset + 150)
+        c.lineTo(-xOffset + 50, -yOffset + 75)
+        c.closePath()
+        c.fillStyle = `rgba(${0xCF}, 0, 0, ${opacity})`
+        c.fill()
+    }
+
+    const renderRightDisturbance = (c, width, height, opacity) => {
+        const xOffset = 3 / 8 * width
+        const yOffset = 3 / 8 * height
+        c.beginPath()
+        c.moveTo(xOffset, -yOffset)
+        c.lineTo(xOffset, -yOffset + 150)
+        c.lineTo(xOffset - 50, -yOffset + 75)
+        c.closePath()
+        c.fillStyle = `rgba(${0xCF}, 0, 0, ${opacity})`
+        c.fill()
+    }
+
+    return {
+        /**
+         *
+         * @param isLeft {boolean}
+         * @param amplitude {Number}
+         * @param duration {Number}
+         */
+        add(isLeft, amplitude, duration) {
+            items.push({
+                isLeft, amplitude, duration, opacity: 1
+            })
+        },
+        /**
+         *
+         * @param c {CanvasRenderingContext2D}
+         * @param width {Number}
+         * @param height {Number}
+         */
+        render(c, width, height) {
+            for (const d of items) {
+                if (d.isLeft) {
+                    renderLeftDisturbance(c, width, height, d.opacity)
+                } else {
+                    renderRightDisturbance(c, width, height, d.opacity)
+                }
+            }
+        },
+        fadeOut() {
+            const nonZero = []
+            for (let i = 0; i < items.length; i++) {
+                items[i].opacity -= Math.max(items[i].duration / 20, 0.005)
+                if (items[i].opacity > 0.1) {
+                    nonZero.push(items[i])
+                }
+            }
+            items = nonZero
+        }
+    }
+}
+
+const disturbanceHistory = DisturbanceHistory()
+
 /**
  * Renders a circle with a black and yellow quadrants
  * @param c {CanvasRenderingContext2D}
@@ -177,18 +246,6 @@ function renderBase(c, scale) {
     c.stroke()
 }
 
-function renderDisturbance(c, width, height) {
-    const xOffset = 3 / 8 * width
-    const yOffset = 3 / 8 * height
-    c.beginPath()
-    c.moveTo(-xOffset, -yOffset)
-    c.lineTo(-xOffset, -yOffset + 150)
-    c.lineTo(-xOffset + 50, -yOffset + 75)
-    c.closePath()
-    c.fillStyle = RED
-    c.fill()
-}
-
 /**
  *
  * @param c {CanvasRenderingContext2D}
@@ -208,7 +265,7 @@ function render(c, width, height) {
     c.save()
     c.translate(...origin)
 
-    renderDisturbance(c, width, height)
+    disturbanceHistory.render(c, width, height)
     renderBase(c, scale)
     renderPendulumBody(c, L, th - pi / 2)
     renderCentroid(c, 0, 0, 20, th)
@@ -223,9 +280,11 @@ const disturbance = {
     nextFrame: 57,
     update(t, dt, frame) {
         if (frame % this.nextFrame == 0) {
-            this.endsAt = t + Math.random() * 50 * dt
-            this.value = (Math.random() - 0.5) * 200.0
+            const duration = Math.random()
+            this.endsAt = t + duration * 75 * dt
+            this.value = (Math.random() - 0.5) * 300.0
             this.nextFrame = Math.floor(10 + 100 * Math.random())
+            disturbanceHistory.add(this.value < 0, this.value, duration)
         }
     }
 }
@@ -332,6 +391,7 @@ const sketch = ({canvas}) => {
 
         if (!paused) {
             disturbance.update(t, dt, frame)
+            disturbanceHistory.fadeOut()
             integrate(t, dt)
         }
     }
