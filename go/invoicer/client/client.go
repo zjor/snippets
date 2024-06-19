@@ -65,7 +65,7 @@ type Field struct {
 	Shipping  float64 `json:"shipping"`
 }
 
-func (i *Invoice) Create(fullFilePath string) error {
+func (i *Invoice) Create(apiKey string, fullFilePath string) error {
 	b, err := json.Marshal(*i)
 	if err != nil {
 		return err
@@ -73,7 +73,11 @@ func (i *Invoice) Create(fullFilePath string) error {
 
 	client := &http.Client{}
 
-	resp, err := client.Post(requestURL, requestType, bytes.NewBuffer(b))
+	req, _ := http.NewRequest("POST", requestURL, bytes.NewBuffer(b))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

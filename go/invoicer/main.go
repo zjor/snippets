@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/joho/godotenv"
+	"log"
 	"os"
 	"royz.cc/invoicer/client"
 	"strings"
@@ -39,6 +41,11 @@ func (v *InvoiceData) toClientItems() []client.Item {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	bytes, err := os.ReadFile("./.data.json")
 	if err != nil {
 		panic(err)
@@ -62,7 +69,8 @@ func main() {
 		Items:    invoiceData.toClientItems(),
 	}
 
-	path := "/Users/zjor/projects/ion/accounting/2024/may/two"
+	path := "/Users/zjor/projects/ion/accounting/2024/june/one"
 	saveTo := fmt.Sprintf("%s/ad-%s.pdf", path, invoiceNumber)
-	invoice.Create(saveTo)
+	apiKey := os.Getenv("INVOICE_GENERATOR_API_KEY")
+	invoice.Create(apiKey, saveTo)
 }
