@@ -35,32 +35,45 @@ let dth = .0
 let phi = .0
 let dphi = .0
 
+/**
+ *
+ * @param ctx {CanvasRenderingContext2D}
+ * @param origin {Array}
+ * @param scale {Number}
+ * @param opacity {Number}
+ */
+function leftDisturbanceTriangle(ctx, origin, scale, opacity) {
+    const [w, h] = [50, 150]
+    storedContext(ctx, c => {
+        c.translate(origin[0] + w / 2, origin[1])
+        c.scale(scale, scale)
+        c.beginPath()
+        c.moveTo(-w / 2, -h / 2)
+        c.lineTo(w / 2, 0)
+        c.lineTo(-w / 2, h / 2)
+        c.closePath()
+        c.fillStyle = `rgba(${0xCF}, 0, 0, ${opacity})`
+        c.fill()
+    })
+}
+
+function rightDisturbanceTriangle(ctx, origin, scale, opacity) {
+    const [w, h] = [50, 150]
+    storedContext(ctx, c => {
+        c.translate(origin[0] - w / 2, origin[1])
+        c.scale(scale, scale)
+        c.beginPath()
+        c.moveTo(w / 2, -h / 2)
+        c.lineTo(-w / 2, 0)
+        c.lineTo(w / 2, h / 2)
+        c.closePath()
+        c.fillStyle = `rgba(${0xCF}, 0, 0, ${opacity})`
+        c.fill()
+    })
+}
+
 const DisturbanceHistory = () => {
     let items = []
-
-    const renderLeftDisturbance = (c, width, height, opacity) => {
-        const xOffset = 3 / 8 * width
-        const yOffset = 3 / 8 * height
-        c.beginPath()
-        c.moveTo(-xOffset, -yOffset)
-        c.lineTo(-xOffset, -yOffset + 150)
-        c.lineTo(-xOffset + 50, -yOffset + 75)
-        c.closePath()
-        c.fillStyle = `rgba(${0xCF}, 0, 0, ${opacity})`
-        c.fill()
-    }
-
-    const renderRightDisturbance = (c, width, height, opacity) => {
-        const xOffset = 3 / 8 * width
-        const yOffset = 3 / 8 * height
-        c.beginPath()
-        c.moveTo(xOffset, -yOffset)
-        c.lineTo(xOffset, -yOffset + 150)
-        c.lineTo(xOffset - 50, -yOffset + 75)
-        c.closePath()
-        c.fillStyle = `rgba(${0xCF}, 0, 0, ${opacity})`
-        c.fill()
-    }
 
     return {
         /**
@@ -70,6 +83,9 @@ const DisturbanceHistory = () => {
          * @param duration {Number}
          */
         add(isLeft, amplitude, duration) {
+            if (amplitude < 0) {
+                throw new Error("Amplitude should be positive")
+            }
             items.push({
                 isLeft, amplitude, duration, opacity: 1
             })
@@ -82,10 +98,20 @@ const DisturbanceHistory = () => {
          */
         render(c, width, height) {
             for (const d of items) {
+                const opacity = Math.sqrt(d.opacity)
+                const scale = (d.amplitude / 75) * opacity
                 if (d.isLeft) {
-                    renderLeftDisturbance(c, width, height, d.opacity)
+                    let origin = [
+                        -3 / 8 * width,
+                        -3 / 8 * height + 75
+                    ];
+                    leftDisturbanceTriangle(c, origin, scale, opacity)
                 } else {
-                    renderRightDisturbance(c, width, height, d.opacity)
+                    let origin = [
+                        3 / 8 * width,
+                        -3 / 8 * height + 75
+                    ];
+                    rightDisturbanceTriangle(c, origin, scale, opacity)
                 }
             }
         },
@@ -284,7 +310,7 @@ const disturbance = {
             this.endsAt = t + duration * 75 * dt
             this.value = (Math.random() - 0.5) * 300.0
             this.nextFrame = Math.floor(10 + 100 * Math.random())
-            disturbanceHistory.add(this.value < 0, this.value, duration)
+            disturbanceHistory.add(this.value < 0, Math.abs(this.value), duration)
         }
     }
 }
@@ -344,34 +370,28 @@ function getPiePath() {
 }
 
 /**
- * Sandbox scene
+ *
  * @param c {CanvasRenderingContext2D}
+ * @param render {Function}
+ */
+function storedContext(c, render) {
+    c.save()
+    render(c)
+    c.restore()
+}
+
+/**
+ * Sandbox scene
+ * @param ctx {CanvasRenderingContext2D}
  * @param width {Number}
  * @param height {Number}
  */
-function renderSandbox(c, width, height) {
+function renderSandbox(ctx, width, height) {
 
     const origin = [width / 2, height / 2]
-    c.strokeStyle = ORANGE
-    c.lineWidth = 2
+    ctx.strokeStyle = ORANGE
+    ctx.lineWidth = 2
 
-    c.save()
-    c.translate(...origin)
-
-    c.fillStyle = 'rgba(255, 165, 0, 0.5)'
-
-    const path = new Path2D()
-    const outerRadius = 180
-    path.ellipse(0, 0, outerRadius, outerRadius, 0, 0, 2 * pi, true)
-    const piePath = getPiePath()
-    path.addPath(piePath)
-    path.addPath(piePath, (new DOMMatrix()).rotate(90))
-    path.addPath(piePath, (new DOMMatrix()).rotate(180))
-    path.addPath(piePath, (new DOMMatrix()).rotate(270))
-    c.stroke(path)
-    c.fill(path, 'nonzero')
-
-    c.restore()
 }
 
 let t = Date.now()
@@ -403,12 +423,9 @@ window.addEventListener('click', _ => paused = !paused)
 
 /*
 TODO:
-- keep track of disturbance history
-- face away the triangle
-- scale the triangle according to the force
+- [x] face away the triangle
+- [x] scale the triangle according to the force
 - face speed ~ the duration of action
-
 ---
-
 - plot graphs of system state (th, dth, dphi, control)
  */
