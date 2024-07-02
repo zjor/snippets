@@ -21,7 +21,8 @@ const PINK = '#DF19FB'
 let paused = true
 
 const g = 9.81
-
+const MODE_SWING_UP = 0
+const MODE_BALANCE = 1
 
 const m1 = 0.9  // mass of the rod
 const m2 = 3.0  // mass of the wheel
@@ -29,11 +30,14 @@ const r = 0.6   // radius of the wheel
 const l = 1.25  // length of the rod
 const J = m2 * r ** 2   // momentum of inertia of the wheel
 
-const th0 = pi / 6
+const th0 = 5 * pi / 6
 let th = th0
 let dth = .0
 let phi = .0
 let dphi = .0
+
+let disturbanceEnabled = false
+let mode = MODE_SWING_UP
 
 /**
  *
@@ -297,6 +301,10 @@ function render(c, width, height) {
     renderCentroid(c, 0, 0, 20, th)
     renderWheel(c, x, y)
 
+    c.font = '24px monospace'
+    c.fillStyle = PINK
+    c.fillText(`Mode: ${mode == MODE_SWING_UP ? "Swing Up" : "Balance"}`.toUpperCase(), -width / 2 + 16, -height / 2 + 32)
+
     c.restore()
 }
 
@@ -305,7 +313,7 @@ const disturbance = {
     value: 0,
     nextFrame: 57,
     update(t, dt, frame) {
-        if (frame % this.nextFrame == 0) {
+        if (disturbanceEnabled && frame % this.nextFrame == 0) {
             const duration = Math.random()
             this.endsAt = t + duration * 75 * dt
             this.value = (Math.random() - 0.5) * 300.0
@@ -313,6 +321,33 @@ const disturbance = {
             disturbanceHistory.add(this.value < 0, Math.abs(this.value), duration)
         }
     }
+}
+
+/**
+ * Calculates control signal necessary to swing-up a pendulum.
+ * Ref: [2014, Lin et al.] "Design and implementation of a novel inertia flywheel pendulum mechatronic kit"
+ * @param th
+ * @param dth
+ * @return {number}
+ */
+function energyControlSwingUp(th, dth) {
+    const gamma = 0.02
+    return -gamma * (J * dth ** 2 / 2 - (m1 + m2) * l * g * (1 - cos(th))) * dth
+}
+
+function maximumEnergySwingUp() {
+    //TODO: implement
+}
+
+/**
+ * Calculates control signal for balancing a pendulum using state regulator
+ * @param th {number}
+ * @param dth {number}
+ * @param dphi {number}
+ * @return {number}
+ */
+function lqrBalance(th, dth, dphi) {
+    return -(195 * th + 100 * dth - 10 * dphi)
 }
 
 /**
@@ -324,12 +359,25 @@ const disturbance = {
  */
 function derive(state, t, dt) {
     const [_th, _dth, _phi, _dphi] = state
-    const control = -(195 * _th + 100 * _dth - 10 * _dphi)
+
+    if (Math.abs(_th) <= pi / 6) {
+        mode = MODE_BALANCE
+        disturbanceEnabled = true
+    } else {
+        mode = MODE_SWING_UP
+    }
+
+    let control = 0
+    if (mode == MODE_SWING_UP) {
+        control = energyControlSwingUp(_th, _dth)
+    } else if (mode == MODE_BALANCE) {
+        control = lqrBalance(_th, _dth, _dphi)
+    }
 
     const kick = disturbance.endsAt > t ? disturbance.value : 0
 
-    ddth = (control + kick - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
-    ddphi = control / J
+    const ddth = (control + kick - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
+    const ddphi = control / J
     return [_dth, ddth, _dphi, ddphi]
 }
 
@@ -423,9 +471,8 @@ window.addEventListener('click', _ => paused = !paused)
 
 /*
 TODO:
-- [x] face away the triangle
-- [x] scale the triangle according to the force
 - face speed ~ the duration of action
 ---
 - plot graphs of system state (th, dth, dphi, control)
+- print mode
  */

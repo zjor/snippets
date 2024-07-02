@@ -1,22 +1,20 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
-func Square(number int) (uint64, error) {
-	if number < 1 || number > 64 {
-		return 0, fmt.Errorf("invalid number")
-	}
-	return 1 << uint(number-1), nil
+func parseInt8(s string) int8 {
+	i, _ := strconv.ParseInt(s, 10, 8)
+	return int8(i)
 }
 
-func Total() uint64 {
-	total := uint64(0)
-	for i := 1; i <= 64; i++ {
-		sq, _ := Square(i)
-		total += sq
-	}
-	return total
+func parseFloat64(s string) float64 {
+	f, _ := strconv.ParseFloat(s, 64)
+	return f
 }
 
 func main() {
+	fmt.Printf("%v\n", parseFloat64("1.0"))
 }

@@ -69,7 +69,7 @@ func main() {
 		Items:    invoiceData.toClientItems(),
 	}
 
-	path := "/Users/zjor/projects/ion/accounting/2024/june/one"
+	path := "/Users/zjor/projects/ion/accounting/2024/june/two"
 	saveTo := fmt.Sprintf("%s/ad-%s.pdf", path, invoiceNumber)
 	apiKey := os.Getenv("INVOICE_GENERATOR_API_KEY")
 	invoice.Create(apiKey, saveTo)
