@@ -29,6 +29,7 @@ const m2 = 3.0  // mass of the wheel
 const r = 0.6   // radius of the wheel
 const l = 1.25  // length of the rod
 const J = m2 * r ** 2   // momentum of inertia of the wheel
+const Jr = m1 * l ** 2 / 3 // momentum of inertia of the rod
 
 const th0 = 5 * pi / 6
 let th = th0
@@ -38,6 +39,21 @@ let dphi = .0
 
 let disturbanceEnabled = false
 let mode = MODE_SWING_UP
+
+function normalizeAngle(a) {
+    while (a >= 2 * pi) {
+        a -= 2 * pi
+    }
+
+    while (a <= -2 * pi) {
+        a += 2 * pi
+    }
+
+    if (a >= pi) {
+        a = a - 2 * pi
+    }
+    return a
+}
 
 /**
  *
@@ -304,6 +320,8 @@ function render(c, width, height) {
     c.font = '24px monospace'
     c.fillStyle = PINK
     c.fillText(`Mode: ${mode == MODE_SWING_UP ? "Swing Up" : "Balance"}`.toUpperCase(), -width / 2 + 16, -height / 2 + 32)
+    const nTh = normalizeAngle(th)
+    c.fillText(`θ: ${nTh > 0 ? ' ' : ''}${(nTh / pi * 180).toFixed(1)}`, -width / 2 + 16, -height / 2 + 32 * 2)
 
     c.restore()
 }
@@ -323,6 +341,10 @@ const disturbance = {
     }
 }
 
+function getEnergy(th, dth) {
+    return Jr * dth ** 2 / 2 + (cos(th) - 1) * l * g * (m1 / 2 + m2)
+}
+
 /**
  * Calculates control signal necessary to swing-up a pendulum.
  * Ref: [2014, Lin et al.] "Design and implementation of a novel inertia flywheel pendulum mechatronic kit"
@@ -331,12 +353,12 @@ const disturbance = {
  * @return {number}
  */
 function energyControlSwingUp(th, dth) {
-    const gamma = 0.02
-    return -gamma * (J * dth ** 2 / 2 - (m1 + m2) * l * g * (1 - cos(th))) * dth
+    const gamma = 0.025
+    return -gamma * getEnergy(th, dth) * dth
 }
 
-function maximumEnergySwingUp() {
-    //TODO: implement
+function maximumEnergySwingUp(th, dth) {
+    return -10 * Math.sign(getEnergy(th, dth) * dth)
 }
 
 /**
@@ -358,25 +380,28 @@ function lqrBalance(th, dth, dphi) {
  * @returns {Array<Number>}
  */
 function derive(state, t, dt) {
-    const [_th, _dth, _phi, _dphi] = state
-
-    if (Math.abs(_th) <= pi / 6) {
+    let [_th, _dth, _phi, _dphi] = state
+    _th = normalizeAngle(_th)
+    if (Math.abs(_th) <= pi / 8) {
         mode = MODE_BALANCE
         disturbanceEnabled = true
     } else {
-        mode = MODE_SWING_UP
+        if (mode == MODE_BALANCE && Math.abs(_th) > pi / 6) {
+            mode = MODE_SWING_UP
+        }
     }
 
     let control = 0
     if (mode == MODE_SWING_UP) {
         control = energyControlSwingUp(_th, _dth)
+        // control = maximumEnergySwingUp(_th, _dth)
     } else if (mode == MODE_BALANCE) {
         control = lqrBalance(_th, _dth, _dphi)
     }
 
     const kick = disturbance.endsAt > t ? disturbance.value : 0
 
-    const ddth = (control + kick - (0.5 * m1 + m2) * l * g * sin(-_th)) / (m1 * l ** 2 / 3 + m2 * l ** 2 + J)
+    const ddth = (control + kick - (0.5 * m1 + m2) * l * g * sin(-_th)) / (Jr + m2 * l ** 2 + J)
     const ddphi = control / J
     return [_dth, ddth, _dphi, ddphi]
 }
