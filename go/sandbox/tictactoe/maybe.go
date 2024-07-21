@@ -1,18 +1,18 @@
 package tictactoe
 
 type Maybe[T any] struct {
-	value    T
+	Value    T
 	hasValue bool
 }
 
 func NewValue[T any](value T) Maybe[T] {
 	return Maybe[T]{
-		value:    value,
+		Value:    value,
 		hasValue: true,
 	}
 }
 
-func NewEmpty[T any]() Maybe[T] {
+func NoValue[T any]() Maybe[T] {
 	return Maybe[T]{
 		hasValue: false,
 	}
