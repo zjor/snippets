@@ -2,39 +2,14 @@ package main
 
 import (
 	"fmt"
+	"sandbox/tictactoe"
 )
 
-func Sieve(limit int) []int {
-	raw := make([]int, limit+1)
-	for i := 0; i <= limit; i++ {
-		raw[i] = i + 2
-	}
-
-	for i := 0; i < limit-1; i++ {
-		if raw[i] == 0 {
-			continue
-		}
-		for j := i + 1; j < limit; j++ {
-			if raw[j] == 0 {
-				continue
-			}
-			if raw[j]%raw[i] == 0 {
-				raw[j] = 0
-			}
-		}
-	}
-
-	res := make([]int, 0)
-	for i := 0; i <= limit; i++ {
-		if raw[i] > 0 && raw[i] <= limit {
-			res = append(res, raw[i])
-		}
-	}
-
-	return res
-}
-
 func main() {
-	fmt.Println(Sieve(1000))
-
+	s := tictactoe.State(0)
+	s = s.Set(0, 0, tictactoe.PlayerO).Set(0, 1, tictactoe.PlayerX).Set(0, 2, tictactoe.PlayerO)
+	s = s.Set(1, 0, tictactoe.PlayerO).Set(1, 1, tictactoe.PlayerX).Set(1, 2, tictactoe.PlayerX)
+	s = s.Set(2, 0, tictactoe.PlayerX).Set(2, 1, tictactoe.PlayerO).Set(2, 2, tictactoe.PlayerX)
+	s.Render()
+	fmt.Printf("Player X won: %t\n", s.IsDraw())
 }
