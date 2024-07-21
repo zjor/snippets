@@ -287,6 +287,4 @@ func (n *MinMaxNode) GetBestMoves(player CellValue) []*MinMaxNode {
 	return moves
 }
 
-//TODO: store move itself
-//TODO: implement game loop
 //TODO: AI should strive for the longest game
