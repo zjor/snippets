@@ -166,19 +166,26 @@ func (s State) GetScore(player CellValue) Maybe[int] {
 	return NoValue[int]()
 }
 
-func (s State) GetNextStates(player CellValue) []State {
+func (s State) GetNextStates(player CellValue) ([]State, []Move) {
 	player.failIfEmpty("player should not be empty")
 
 	states := make([]State, 0)
+	moves := make([]Move, 0)
 	for r := uint8(0); r < 3; r++ {
 		for c := uint8(0); c < 3; c++ {
 			if s.Get(r, c) == Empty {
 				states = append(states, s.Set(r, c, player))
+				moves = append(moves, Move{Row: r, Column: c})
 			}
 		}
 	}
 
-	return states
+	return states, moves
+}
+
+type Move struct {
+	Row    uint8
+	Column uint8
 }
 
 // MinMaxNode TODO: add depth
@@ -188,59 +195,98 @@ type MinMaxNode struct {
 	Score      Maybe[int]
 	Parent     *MinMaxNode
 	Children   []*MinMaxNode
+	Move       Maybe[Move]
 }
 
 func (n *MinMaxNode) String() string {
 	str := "State:\n" + n.State.String()
 	str += "PlayerTurn: " + n.PlayerTurn.String() + "\n"
-	str += "Score: " + fmt.Sprintf("%v", n.Score) + "\n"
+	if n.Score.HasValue() {
+		str += "Score: " + fmt.Sprintf("%d\n", n.Score.Value)
+	} else {
+		str += "Score: n/a\n"
+	}
 	str += "# children: " + fmt.Sprintf("%d\n", len(n.Children))
+	if n.Move.HasValue() {
+		str += "Move: " + fmt.Sprintf("(%d, %d)\n", n.Move.Value.Row, n.Move.Value.Column)
+	}
 	return str
 }
 
 var AllStates = map[State]*MinMaxNode{}
 
-func NewMinMaxNode(state State, playerTurn CellValue) *MinMaxNode {
+func NewMinMaxNode(state State, playerTurn CellValue, move Maybe[Move]) *MinMaxNode {
 	playerTurn.failIfEmpty("can't be Empty")
 	node := MinMaxNode{
 		State:      state,
 		PlayerTurn: playerTurn,
 		Score:      NoValue[int](),
 		Children:   make([]*MinMaxNode, 0),
+		Move:       move,
 	}
 	AllStates[state] = &node
 	return &node
+}
+
+func (n *MinMaxNode) GetMaxScore() int {
+	maxScore := -(1<<32 - 1)
+	for _, c := range n.Children {
+		s := c.Score
+		if s.HasValue() && maxScore < s.Value {
+			maxScore = s.Value
+		}
+	}
+
+	return maxScore
+}
+
+func (n *MinMaxNode) GetMinScore() int {
+	minScore := 1<<32 - 1
+	for _, c := range n.Children {
+		s := c.Score
+		if s.HasValue() && minScore > s.Value {
+			minScore = s.Value
+		}
+	}
+
+	return minScore
 }
 
 func (n *MinMaxNode) Explore() {
 	if n.State.IsGameOver() {
 		n.Score = n.State.GetScore(PlayerX)
 	} else {
-		opponent := n.PlayerTurn.GetOpponent()
-		for _, next := range n.State.GetNextStates(opponent) {
-			newNode := NewMinMaxNode(next, opponent)
+		states, moves := n.State.GetNextStates(n.PlayerTurn)
+		for i, next := range states {
+			newNode := NewMinMaxNode(next, n.PlayerTurn.GetOpponent(), NewValue(moves[i]))
 			n.Children = append(n.Children, newNode)
 			newNode.Explore()
 		}
 		if n.PlayerTurn == PlayerX {
-			//maximize score
-			score := -(1<<32 - 1)
-			for _, child := range n.Children {
-				if (*child).Score.HasValue() && score < (*child).Score.Value {
-					score = (*child).Score.Value
-				}
-			}
-			n.Score = NewValue(score)
+			n.Score = NewValue(n.GetMaxScore())
 		} else {
-			//minimize score
-			score := 1<<32 - 1
-			for _, child := range n.Children {
-				if (*child).Score.HasValue() && score > (*child).Score.Value {
-					score = (*child).Score.Value
-				}
-			}
-			n.Score = NewValue(score)
+			n.Score = NewValue(n.GetMinScore())
+		}
+	}
+}
+
+func (n *MinMaxNode) GetBestMoves(player CellValue) []*MinMaxNode {
+	player.failIfEmpty("")
+	targetScore := n.GetMaxScore()
+	if player == PlayerO {
+		targetScore = n.GetMinScore()
+	}
+	moves := make([]*MinMaxNode, 0)
+	for _, c := range n.Children {
+		s := c.Score
+		if s.HasValue() && s.Value == targetScore {
+			moves = append(moves, c)
 		}
 	}
 
+	return moves
 }
+
+//TODO: store move itself
+//TODO: implement game loop
+//TODO: AI should strive for the longest game
