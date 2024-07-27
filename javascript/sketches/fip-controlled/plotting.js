@@ -3,6 +3,8 @@ const _fontSize = 18
 const _labelFont = `${_fontSize}px monospace`
 const _labelLeftPadding = 48
 const _plotColor = '#12B8FF'
+const _maxDataPoints = 200
+
 /**
  *
  * @param c {CanvasRenderingContext2D}
@@ -21,7 +23,54 @@ const Plot = ({top, left, width, height, title}) => {
     width -= 2 * _padding
     height -= 2 * _padding
 
+    const data = []
+    let minTimestamp = 0
+    let maxTimestamp = 0
+    let minValue = 1 << 24
+    let maxValue = -1 << 24
+
+    /**
+     *
+     * @param c {CanvasRenderingContext2D}
+     */
+    function plotData(c) {
+        if (data.length < 2) {
+            return
+        }
+        c.strokeStyle = _plotColor
+
+        c.save()
+
+        c.translate(left, top + height / 2)
+
+        c.beginPath()
+        c.moveTo(data[0].ts - minTimestamp, data[0].v)
+        for (let i = 1; i < data.length; i++) {
+            c.lineTo((data[i].ts - minTimestamp) * 0.15, data[i].v)
+        }
+        c.stroke()
+
+        c.restore()
+    }
+
     return {
+
+        /**
+         *
+         * @param timestamp {Number}
+         * @param value {Number}
+         */
+        appendDataPoint(timestamp, value) {
+            data.push({ts: timestamp, v: value * 180 / Math.PI * 10})
+            while (data.length > _maxDataPoints) {
+                data.shift()
+            }
+            if (data.length > 0) {
+                minTimestamp = data[0].ts
+                maxTimestamp = data[data.length - 1].ts
+            }
+        },
+
         /**
          *
          * @param c {CanvasRenderingContext2D}
@@ -48,8 +97,7 @@ const Plot = ({top, left, width, height, title}) => {
             c.font = _labelFont
             c.fillText(title, left + _labelLeftPadding + _padding, top + _fontSize / 2)
 
-
-
+            plotData(c)
         }
     }
 }

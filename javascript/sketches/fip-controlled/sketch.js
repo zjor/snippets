@@ -527,6 +527,8 @@ const sketch = ({canvas}) => {
         dPhiPlot.render(c)
         uPlot.render(c)
 
+        thetaPlot.appendDataPoint(now, normalizeAngle(th))
+
         if (!paused) {
             disturbance.update(t, dt, frame)
             disturbanceHistory.fadeOut()
