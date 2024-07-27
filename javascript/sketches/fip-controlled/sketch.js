@@ -41,6 +41,9 @@ let dth = .0
 let phi = .0
 let dphi = .0
 
+let control = 0
+
+
 let disturbanceEnabled = false
 let mode = MODE_SWING_UP
 
@@ -395,7 +398,6 @@ function derive(state, t, dt) {
         }
     }
 
-    let control = 0
     if (mode == MODE_SWING_UP) {
         control = energyControlSwingUp(_th, _dth)
         // control = maximumEnergySwingUp(_th, _dth)
@@ -527,7 +529,11 @@ const sketch = ({canvas}) => {
         dPhiPlot.render(c)
         uPlot.render(c)
 
-        thetaPlot.appendDataPoint(now, normalizeAngle(th))
+        thetaPlot.appendDataPoint(now, th)
+        omegaPlot.appendDataPoint(now, dth)
+        dPhiPlot.appendDataPoint(now, dphi)
+        uPlot.appendDataPoint(now, control)
+
 
         if (!paused) {
             disturbance.update(t, dt, frame)

@@ -3,6 +3,7 @@ const _fontSize = 18
 const _labelFont = `${_fontSize}px monospace`
 const _labelLeftPadding = 48
 const _plotColor = '#12B8FF'
+const _dataPointsTopBottomPadding = 24
 const _maxDataPoints = 200
 
 /**
@@ -29,6 +30,23 @@ const Plot = ({top, left, width, height, title}) => {
     let minValue = 1 << 24
     let maxValue = -1 << 24
 
+    function updateMinMax() {
+        minValue = 1 << 24
+        maxValue = -1 << 24
+        for (let dataPoint of data) {
+            minValue = Math.min(minValue, dataPoint.v)
+            maxValue = Math.max(maxValue, dataPoint.v)
+        }
+    }
+
+    function scaleToFit(x, min, max, toMin, toMax) {
+        if (Math.abs(min - max) > 1e-3) {
+            return toMin + (toMax - toMin) * ((x - min) / (max - min))
+        } else {
+            return x
+        }
+    }
+
     /**
      *
      * @param c {CanvasRenderingContext2D}
@@ -37,16 +55,22 @@ const Plot = ({top, left, width, height, title}) => {
         if (data.length < 2) {
             return
         }
+        updateMinMax()
+        // console.log(minValue, maxValue)
         c.strokeStyle = _plotColor
 
         c.save()
 
         c.translate(left, top + height / 2)
 
+        const verticalSpan = height / 2 - _dataPointsTopBottomPadding
+
         c.beginPath()
-        c.moveTo(data[0].ts - minTimestamp, data[0].v)
+        c.moveTo(data[0].ts - minTimestamp, scaleToFit(data[0].v, minValue, maxValue, -verticalSpan, verticalSpan))
         for (let i = 1; i < data.length; i++) {
-            c.lineTo((data[i].ts - minTimestamp) * 0.15, data[i].v)
+            const x = (data[i].ts - minTimestamp) * 0.15
+            const y = scaleToFit(data[i].v, minValue, maxValue, -verticalSpan, verticalSpan)
+            c.lineTo(x, y)
         }
         c.stroke()
 
@@ -61,7 +85,7 @@ const Plot = ({top, left, width, height, title}) => {
          * @param value {Number}
          */
         appendDataPoint(timestamp, value) {
-            data.push({ts: timestamp, v: value * 180 / Math.PI * 10})
+            data.push({ts: timestamp, v: value})
             while (data.length > _maxDataPoints) {
                 data.shift()
             }
