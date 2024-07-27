@@ -2,9 +2,13 @@ const canvasSketch = require('canvas-sketch')
 const {PI: pi, cos, sin, sqrt} = Math
 const {Vector} = require('./geometry')
 const {integrateRK4} = require('./ode')
+const {Plot} = require("./plotting");
+
+const WIDTH = 1080
+const HEIGHT = 1080
 
 const settings = {
-    dimensions: [1080, 1080],
+    dimensions: [WIDTH, HEIGHT],
     animate: true
 }
 const BLACK = '#000'
@@ -467,6 +471,43 @@ function renderSandbox(ctx, width, height) {
 
 }
 
+// plots Theta - an angle of the pendulum
+const thetaPlot = Plot({
+    top: 3/5 * HEIGHT,
+    left: 0,
+    width: WIDTH / 2,
+    height: HEIGHT / 5,
+    title: 'θ | pendulum angle'
+})
+
+// plots Omega - an angular velocity of the pendulum
+const omegaPlot = Plot({
+    top: 4/5 * HEIGHT,
+    left: 0,
+    width: WIDTH / 2,
+    height: HEIGHT / 5,
+    title: 'ω | pendulum angular velocity'
+})
+
+// plots phi dot - an angular velocity of the flywheel
+const dPhiPlot = Plot({
+    top: 3/5 * HEIGHT,
+    left: WIDTH / 2,
+    width: WIDTH / 2,
+    height: HEIGHT / 5,
+    title: 'dɸ/dt | flywheel angular velocity'
+})
+
+// plots u - a control signal
+const uPlot = Plot({
+    top: 4/5 * HEIGHT,
+    left: WIDTH / 2,
+    width: WIDTH / 2,
+    height: HEIGHT / 5,
+    title: 'u | control signal'
+})
+
+
 let t = Date.now()
 
 const sketch = ({canvas}) => {
@@ -481,6 +522,10 @@ const sketch = ({canvas}) => {
         // renderSandbox(c, width, height)
 
         render(c, width, height)
+        thetaPlot.render(c)
+        omegaPlot.render(c)
+        dPhiPlot.render(c)
+        uPlot.render(c)
 
         if (!paused) {
             disturbance.update(t, dt, frame)
