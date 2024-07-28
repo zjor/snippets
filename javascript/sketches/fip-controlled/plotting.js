@@ -27,15 +27,20 @@ const Plot = ({top, left, width, height, title}) => {
     const data = []
     let minTimestamp = 0
     let maxTimestamp = 0
-    let minValue = 1 << 24
     let maxValue = -1 << 24
 
     function updateMinMax() {
-        minValue = 1 << 24
-        maxValue = -1 << 24
+        let _minValue = 1 << 24
+        let _maxValue = -1 << 24
         for (let dataPoint of data) {
-            minValue = Math.min(minValue, dataPoint.v)
-            maxValue = Math.max(maxValue, dataPoint.v)
+            _minValue = Math.min(_minValue, dataPoint.v)
+            _maxValue = Math.max(_maxValue, dataPoint.v)
+        }
+        _maxValue = Math.max(Math.abs(_maxValue), Math.abs(_minValue))
+        if (_maxValue > maxValue) {
+            maxValue = _maxValue
+        } else {
+            maxValue -= (maxValue - _maxValue) * 0.2
         }
     }
 
@@ -66,10 +71,10 @@ const Plot = ({top, left, width, height, title}) => {
         const verticalSpan = height / 2 - _dataPointsTopBottomPadding
 
         c.beginPath()
-        c.moveTo(data[0].ts - minTimestamp, scaleToFit(data[0].v, minValue, maxValue, -verticalSpan, verticalSpan))
+        c.moveTo(data[0].ts - minTimestamp, scaleToFit(data[0].v, -maxValue, maxValue, -verticalSpan, verticalSpan))
         for (let i = 1; i < data.length; i++) {
             const x = (data[i].ts - minTimestamp) * 0.15
-            const y = scaleToFit(data[i].v, minValue, maxValue, -verticalSpan, verticalSpan)
+            const y = scaleToFit(data[i].v, -maxValue, maxValue, -verticalSpan, verticalSpan)
             c.lineTo(x, y)
         }
         c.stroke()

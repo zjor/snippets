@@ -75,7 +75,7 @@ func Answer(question string) (int, bool) {
 	return result, true
 }
 
-func main() {
+func main_old() {
 	tests := []string{
 		"What is 5?",
 		"What is 5 plus 13?",
