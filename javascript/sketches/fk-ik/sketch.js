@@ -1,6 +1,8 @@
 const canvasSketch = require('canvas-sketch')
 const {PI: pi, cos, sin, sqrt} = Math
 
+const {Knob} = require('./knob')
+
 const settings = {
     dimensions: [1080, 1080],
     animate: true
@@ -76,6 +78,13 @@ let paused = true
 canvasSketch(sketch, settings)
 window.addEventListener('click', _ => paused = !paused)
 
+window.addEventListener('mousedown', e => {
+    console.log(e.pageX, e.pageY)
+    knob.mouseDown(e.x, e.y)
+})
+
+const knob = Knob(pi / 3)
+
 function sketch({canvas}) {
 
     return ({context: c, width, height, frame}) => {
@@ -84,8 +93,8 @@ function sketch({canvas}) {
         t = now
 
         const [a1, a2] = [
-            pi/6 * (sin(t / 1000) + 0.3),
-            pi/12 * (sin(t / 1000) + 0.6),
+            pi / 6 * (sin(t / 1000) + 0.3),
+            pi / 12 * (sin(t / 1000) + 0.6),
         ]
 
         const m1 = R(a1).mult(T(200, 0))
@@ -97,6 +106,9 @@ function sketch({canvas}) {
         // render(c, width, height)
         c.save()
         c.translate(width / 2, height / 2)
+
+        knob.render(c)
+
         c.beginPath()
         c.moveTo(0, 0)
         c.lineTo(...m1.vec())
