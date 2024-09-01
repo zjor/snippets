@@ -1,6 +1,6 @@
 const {sin, cos, PI: pi} = Math
 
-const Knob = (initialState, centerX, centerY, incKey, decKey) => {
+const Knob = (initialState, centerX, centerY, incKey, decKey, mainColor, knobColor) => {
     const gaugeRadius = 100
     const knobRadius = 25
 
@@ -24,7 +24,7 @@ const Knob = (initialState, centerX, centerY, incKey, decKey) => {
             c.save()
             c.translate(centerX, centerY)
 
-            c.strokeStyle = 'red'
+            c.strokeStyle = mainColor
             c.lineWidth = 3
             c.beginPath()
             c.arc(0, 0, gaugeRadius, 0, pi, true)
@@ -44,15 +44,24 @@ const Knob = (initialState, centerX, centerY, incKey, decKey) => {
 
             c.font = "24px monospace";
             c.textBaseline = "middle"
-            c.fillStyle = 'red'
-            const text = `${((pi - state) * 180 / pi).toFixed(1)}°`
-            const metrics = c.measureText(text)
+            c.fillStyle = mainColor
+            let text = `${((pi - state) * 180 / pi).toFixed(1)}°`
+            let metrics = c.measureText(text)
             c.fillText(text, -metrics.width / 2, 0)
 
+            text = incKey.toUpperCase()
+            metrics = c.measureText(text)
+            c.fillText(text, -gaugeRadius - metrics.width / 2, 24 * 2)
+
+            text = decKey.toUpperCase()
+            metrics = c.measureText(text)
+            c.fillText(text, gaugeRadius - metrics.width / 2, 24 * 2)
+
+            c.strokeStyle = knobColor
             c.beginPath()
             c.ellipse(kx, ky, knobRadius, knobRadius, 0, 0, 2 * pi)
             c.closePath()
-            c.fillStyle = knobPressed ? 'red' : 'black'
+            c.fillStyle = knobPressed ? knobColor : 'black'
             c.fill()
             c.stroke()
             c.restore()
