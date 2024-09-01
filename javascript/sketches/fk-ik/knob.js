@@ -1,6 +1,6 @@
 const {sin, cos, PI: pi} = Math
 
-const Knob = (initialState, centerX, centerY) => {
+const Knob = (initialState, centerX, centerY, incKey, decKey) => {
     const gaugeRadius = 100
     const knobRadius = 25
 
@@ -88,6 +88,18 @@ const Knob = (initialState, centerX, centerY) => {
         },
         mouseUp() {
             knobPressed = false
+        },
+        keyDown(key) {
+            const step = 0.05
+            if (key == incKey) {
+                if (state + step < pi) {
+                    setState(state + step)
+                }
+            } else if (key == decKey) {
+                if (state - step > 0) {
+                    setState(state - step)
+                }
+            }
         },
         get state() {
             return state

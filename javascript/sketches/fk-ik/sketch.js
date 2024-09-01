@@ -77,9 +77,13 @@ let t = Date.now()
 let paused = true
 canvasSketch(sketch, settings)
 window.addEventListener('click', _ => paused = !paused)
+window.addEventListener('keydown', e => {
+    knobA.keyDown(e.key)
+    knobB.keyDown(e.key)
+})
 
-const knobA = Knob(pi - pi / 3, 1080 / 3, 1080 * 3 / 4)
-const knobB = Knob(pi - pi / 3, 1080 * 2 / 3, 1080 * 3 / 4)
+const knobA = Knob(pi - pi / 3, 1080 / 3, 1080 * 3 / 4, 'a', 'd')
+const knobB = Knob(pi - pi / 3, 1080 * 2 / 3, 1080 * 3 / 4, 's', 'w')
 
 function sketch({canvas}) {
 
@@ -93,8 +97,8 @@ function sketch({canvas}) {
         t = now
 
         const [a1, a2] = [
-            -knobA.state - pi / 2,
-            -knobB.state - pi / 2,
+            -knobA.state,
+            knobB.state,
         ]
 
         const m1 = R(a1).mult(T(200, 0))
