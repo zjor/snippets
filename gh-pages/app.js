@@ -7,6 +7,12 @@ createApp({
 
     const sketchItems = [
       {
+        href: `${URL_PREFIX}/dist/sketches/rr-chasing-the-star.html`,
+        img: `${URL_PREFIX}/images/rr-chasing-the-star-preview.png`,
+        alt: 'rr-chasing-the-star',
+        description: 'RR Chasing the star'
+      },
+      {
         href: `${URL_PREFIX}/dist/sketches/free-fip-friction.html`,
         img: `${URL_PREFIX}/images/free-fip-friction-preview.png`,
         alt: 'free-fip-friction-preview',
