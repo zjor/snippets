@@ -78,14 +78,14 @@ let paused = true
 canvasSketch(sketch, settings)
 window.addEventListener('click', _ => paused = !paused)
 
-window.addEventListener('mousedown', e => {
-    console.log(e.pageX, e.pageY)
-    knob.mouseDown(e.x, e.y)
-})
-
-const knob = Knob(pi / 3)
+const knobA = Knob(pi - pi / 3, 1080 / 3, 1080 * 3 / 4)
+const knobB = Knob(pi - pi / 3, 1080 * 2 / 3, 1080 * 3 / 4)
 
 function sketch({canvas}) {
+
+    canvas.addEventListener('mousedown', onMouseDown(canvas))
+    canvas.addEventListener('mousemove', onMouseMove(canvas))
+    canvas.addEventListener('mouseup', onMouseUp(canvas))
 
     return ({context: c, width, height, frame}) => {
         const now = Date.now()
@@ -93,8 +93,8 @@ function sketch({canvas}) {
         t = now
 
         const [a1, a2] = [
-            pi / 6 * (sin(t / 1000) + 0.3),
-            pi / 12 * (sin(t / 1000) + 0.6),
+            -knobA.state - pi / 2,
+            -knobB.state - pi / 2,
         ]
 
         const m1 = R(a1).mult(T(200, 0))
@@ -104,10 +104,12 @@ function sketch({canvas}) {
         c.fillRect(0, 0, width, height)
 
         // render(c, width, height)
+        knobA.render(c)
+        knobB.render(c)
+
         c.save()
         c.translate(width / 2, height / 2)
 
-        knob.render(c)
 
         c.beginPath()
         c.moveTo(0, 0)
@@ -123,3 +125,32 @@ function sketch({canvas}) {
         }
     }
 }
+
+const onMouseDown = (canvas) => {
+    return (e) => {
+        const x = (e.offsetX / canvas.offsetWidth) * canvas.width
+        const y = (e.offsetY / canvas.offsetHeight) * canvas.height
+        knobA.mouseDown(x, y)
+        knobB.mouseDown(x, y)
+    }
+}
+
+const onMouseMove = (canvas) => {
+    return (e) => {
+        const x = (e.offsetX / canvas.offsetWidth) * canvas.width
+        const y = (e.offsetY / canvas.offsetHeight) * canvas.height
+        knobA.mouseMoved(x, y)
+        knobB.mouseMoved(x, y)
+
+    }
+}
+
+const onMouseUp = (canvas) => {
+    return (e) => {
+        const x = (e.offsetX / canvas.offsetWidth) * canvas.width
+        const y = (e.offsetY / canvas.offsetHeight) * canvas.height
+        knobA.mouseUp()
+        knobB.mouseUp()
+    }
+}
+
