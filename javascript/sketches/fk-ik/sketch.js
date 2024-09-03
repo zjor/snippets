@@ -67,43 +67,52 @@ const T = (tx, ty) => {
     ])
 }
 
-let star = generateStar()
+const Star = (innerRadius, outerRadius, spikes) => {
+    let _x = 0
+    let _y = 0
+    return {
+        generateLocation() {
+            _x = (Math.random() - 0.2) * 200
+            _y = -100 - Math.random() * 150
+        },
+        isTouched(x, y) {
+            const d2 = (_x - x) ** 2 + (_y - y) ** 2
+            return d2 <= outerRadius ** 2
+        },
+        draw(c) {
+            let rot = Math.PI / 2 * 3;
+            let x = _x;
+            let y = _y;
+            const step = Math.PI / spikes;
 
-function generateStar() {
-    return [(Math.random() - 0.2) * 200, -100 - Math.random() * 150]
-}
+            c.beginPath();
+            c.moveTo(_x, _y - outerRadius)
+            for (i = 0; i < spikes; i++) {
+                x = _x + Math.cos(rot) * outerRadius;
+                y = _y + Math.sin(rot) * outerRadius;
+                c.lineTo(x, y)
+                rot += step
 
-function drawStar(c) {
-    const outerRadius = 20
-    const innerRadius = 15
-    const spikes = 8
-    let rot = Math.PI / 2 * 3;
-    let x = star[0];
-    let y = star[1];
-    const step = Math.PI / spikes;
-
-    c.beginPath();
-    c.moveTo(star[0], star[1] - outerRadius)
-    for (i = 0; i < spikes; i++) {
-        x = star[0] + Math.cos(rot) * outerRadius;
-        y = star[1] + Math.sin(rot) * outerRadius;
-        c.lineTo(x, y)
-        rot += step
-
-        x = star[0] + Math.cos(rot) * innerRadius;
-        y = star[1] + Math.sin(rot) * innerRadius;
-        c.lineTo(x, y)
-        rot += step
+                x = _x + Math.cos(rot) * innerRadius;
+                y = _y + Math.sin(rot) * innerRadius;
+                c.lineTo(x, y)
+                rot += step
+            }
+            c.lineTo(_x, _y - outerRadius);
+            c.closePath();
+            c.lineWidth = 5;
+            c.strokeStyle = ORANGE;
+            c.stroke();
+            c.fillStyle = YELLOW;
+            c.fill();
+        }
     }
-    c.lineTo(star[0], star[1] - outerRadius);
-    c.closePath();
-    c.lineWidth = 5;
-    c.strokeStyle = ORANGE;
-    c.stroke();
-    c.fillStyle = YELLOW;
-    c.fill();
-
 }
+
+let star = Star(15, 25, 8)
+star.generateLocation()
+
+const pressedKeys = new Set()
 
 /**
  *
@@ -119,10 +128,8 @@ let t = Date.now()
 let paused = true
 canvasSketch(sketch, settings)
 window.addEventListener('click', _ => paused = !paused)
-window.addEventListener('keydown', e => {
-    knobA.keyDown(e.key)
-    knobB.keyDown(e.key)
-})
+window.addEventListener('keyup', e => pressedKeys.delete(e.key))
+window.addEventListener('keydown', e => pressedKeys.add(e.key))
 
 const knobA = Knob(pi - pi / 3, 1080 / 3, 1080 * 3 / 4, 'a', 'd', BLUE, PINK)
 const knobB = Knob(pi - pi / 3, 1080 * 2 / 3, 1080 * 3 / 4, 's', 'w', BLUE, GREEN)
@@ -194,16 +201,19 @@ function sketch({canvas}) {
         c.stroke()
         c.restore()
 
-        drawStar(c)
+        star.draw(c)
 
         c.restore()
 
-        if (sqrt((star[0] - endEffector[0]) ** 2 + (star[1] - endEffector[1]) ** 2) <= 30) {
-            star = generateStar()
+        if (star.isTouched(...endEffector)) {
+            star.generateLocation()
         }
 
-        if (!paused) {
+        for (let key of pressedKeys) {
+            knobA.keyDown(key)
+            knobB.keyDown(key)
         }
+
     }
 }
 
