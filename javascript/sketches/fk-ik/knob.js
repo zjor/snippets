@@ -112,6 +112,16 @@ const Knob = (initialState, centerX, centerY, incKey, decKey, mainColor, knobCol
         },
         get state() {
             return state
+        },
+        set state(angle) {
+            while (angle > 2 * pi) {
+                angle -= 2 * pi
+            }
+            while (angle < -2 * pi) {
+                angle += 2 * pi
+            }
+
+            setState(angle)
         }
     }
 }

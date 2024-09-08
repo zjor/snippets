@@ -70,10 +70,18 @@ const T = (tx, ty) => {
 const Star = (innerRadius, outerRadius, spikes) => {
     let _x = 0
     let _y = 0
+    // or generated
+    let locationSet = false
+
     return {
+        setLocation(x, y) {
+            _x = x; _y = y
+            locationSet = true
+        },
         generateLocation() {
             _x = (Math.random() - 0.2) * 200
             _y = -100 - Math.random() * 150
+            locationSet = false
         },
         isTouched(x, y) {
             const d2 = (_x - x) ** 2 + (_y - y) ** 2
@@ -105,8 +113,27 @@ const Star = (innerRadius, outerRadius, spikes) => {
             c.stroke();
             c.fillStyle = YELLOW;
             c.fill();
+        },
+        get locationWasSet() {
+            return locationSet
+        },
+        get x() {
+            return _x
+        },
+        get y() {
+            return _y
         }
     }
+}
+
+function solveInverseKinematics(l1, l2, x, y) {
+    const th2 = Math.acos((x ** 2 + y ** 2 - l1 ** 2 - l2 ** 2) / (2 * l1 * l2))
+    let phi = Math.atan(y / x)
+    if (x < 0) {
+        phi = phi - pi
+    }
+    const th1 = phi - Math.atan(l2 * sin(th2) / (l1 + l2 * cos(th2)))
+    return [th1, th2]
 }
 
 let star = Star(15, 25, 8)
@@ -134,24 +161,36 @@ window.addEventListener('keydown', e => pressedKeys.add(e.key))
 const knobA = Knob(pi - pi / 3, 1080 / 3, 1080 * 3 / 4, 'a', 'd', BLUE, PINK)
 const knobB = Knob(pi - pi / 3, 1080 * 2 / 3, 1080 * 3 / 4, 's', 'w', BLUE, GREEN)
 
+const [l1, l2] = [200, 150]
+let [a1, a2] = [-knobA.state, knobB.state]
+
+// target angles
+let [tA1, tA2] = [0, 0]
+
 function sketch({canvas}) {
 
     canvas.addEventListener('mousedown', onMouseDown(canvas))
     canvas.addEventListener('mousemove', onMouseMove(canvas))
     canvas.addEventListener('mouseup', onMouseUp(canvas))
 
+
     return ({context: c, width, height, frame}) => {
         const now = Date.now()
         const dt = (now - t) / 1000
         t = now
 
-        const [a1, a2] = [
-            -knobA.state,
-            knobB.state,
-        ]
+        if (Math.abs(a1 - tA1) > 1e-3) {
+            a1 += (tA1 - a1) / 10
+            knobA.state = a1 - pi
+        }
 
-        const m1 = R(a1).mult(T(200, 0))
-        const m2 = m1.mult(R(a2).mult(T(150, 0)))
+        if (Math.abs(a2 - tA2) > 1e-3) {
+            a2 += (tA2 - a2) / 10
+            knobB.state = a2
+        }
+
+        const m1 = R(a1).mult(T(l1, 0))
+        const m2 = m1.mult(R(a2).mult(T(l2, 0)))
 
         c.fillStyle = '#000'
         c.fillRect(0, 0, width, height)
@@ -205,7 +244,7 @@ function sketch({canvas}) {
 
         c.restore()
 
-        if (star.isTouched(...endEffector)) {
+        if (!star.locationWasSet && star.isTouched(...endEffector)) {
             star.generateLocation()
         }
 
@@ -242,6 +281,25 @@ const onMouseUp = (canvas) => {
         const y = (e.offsetY / canvas.offsetHeight) * canvas.height
         knobA.mouseUp()
         knobB.mouseUp()
+
+        const _x = x - 1080 / 2
+        const _y = y - 1080 / 2
+
+        console.log(_x, _y)
+        if (_y < 0) {
+            star.setLocation(_x, _y)
+            const targetEE = [star.x, star.y]
+            const _ik = solveInverseKinematics(l1, l2, targetEE[0], targetEE[1])
+            tA1 = _ik[0]
+            tA2 = _ik[1]
+        }
     }
 }
+
+/*
+TODO:
+- move star by click
+- animate angle value from a -> b
+- synchronize angles with knob statuses
+ */
 
