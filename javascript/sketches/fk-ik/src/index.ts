@@ -1,5 +1,6 @@
 import canvasSketch from 'canvas-sketch'
-import {drawPieCircle, drawArmLink} from "./geometry";
+import {drawPieCircle, drawArmLink} from "./geometry"
+import {Robot, solveInverseKinematics} from "./kinematics"
 
 const {PI: pi, sin, cos} = Math
 
@@ -16,7 +17,7 @@ const ORANGE = '#FFA500' // rgb(255, 165, 0)
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
 
-const robot = {
+const robot: Robot = {
     th1: pi / 3,
     th2: pi * 3 / 4,
     th3: -pi / 2,
@@ -60,19 +61,35 @@ function drawBase(c: CanvasRenderingContext2D, r: number, lineWidth: number, col
 const settings = {
     canvas,
     dimensions: [1080, 1080],
-    animate: false
+    animate: true
 };
 
 const sketch = ({context, width, height}) => {
-    console.log("Sketch called")
+    let eeX = 250
+    const eeY = 310
+    let phi = pi/3
+    let t = Date.now()
     return ({context: CanvasRenderingContext2D, width, height}) => {
-        console.log("Rendering...")
+        t = Date.now()
+        eeX = 100 + 150 * sin(t / 400)
+        phi = pi/6 + (1 + sin(t / 400)) * pi / 3
+        const state = solveInverseKinematics(eeX, eeY, phi, robot)
+        robot.th1 = state.th1
+        robot.th2 = state.th2
+        robot.th3 = state.th3
+
         context.fillStyle = BLACK;
         context.fillRect(0, 0, width, height);
         context.save()
         context.translate(width / 2, height / 2);
         drawBase(context, 80, 4, GREEN)
         drawRobot(context)
+
+        context.fillStyle = PINK
+        context.beginPath()
+        context.ellipse(eeX, -eeY, 10, 10, 0, 0, 2 * pi)
+        context.fill()
+
         context.restore();
     }
 }
