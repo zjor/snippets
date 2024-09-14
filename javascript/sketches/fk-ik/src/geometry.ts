@@ -21,7 +21,7 @@ export function drawPieCircle(c: CanvasRenderingContext2D, r: number, lineWidth:
     c.fill()
 }
 
-export function drawArmLink(c: CanvasRenderingContext2D, r1: number, r2: number, l: number, angle: number, lineWidth: number, color: string) {
+export function drawArmLink(c: CanvasRenderingContext2D, r1: number, r2: number, l: number, lineWidth: number, color: string) {
     const r = 1.3 * l
 
     const x = l / 2 + (r1 - r2) * (r1 + r2 + 2 * r) / (2 * l)
@@ -34,7 +34,6 @@ export function drawArmLink(c: CanvasRenderingContext2D, r1: number, r2: number,
     c.lineWidth = lineWidth
 
     c.save()
-    c.rotate(angle)
 
     c.beginPath()
     c.ellipse(0, 0, r1, r1, 0, a, -a)
