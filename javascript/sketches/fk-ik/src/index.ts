@@ -167,3 +167,17 @@ const start = async () => {
 };
 
 start().catch(console.error);
+
+/*
+ TODO:
+ - encode different state-actions as functions:
+    - draw on/off
+    - choose color
+    - fade out scene
+ - find an angle to ensure state consistency, should be close to the previous angle
+ - find solvable trajectory (angle should allow for the solution existence along the way)
+ - try different easing functions
+ - vectorize drawn segments, vectorize the segment being drawn but not complete
+ - find a parametric description of a heart
+ - try shaders to make certain part of a scene glow
+ */
