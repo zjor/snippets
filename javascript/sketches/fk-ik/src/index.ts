@@ -17,6 +17,40 @@ const ORANGE = '#FFA500' // rgb(255, 165, 0)
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
 
+const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number, isDrawing: boolean = false) => {
+    return (startTime: number, sX: number, sY: number, sPhi: number) => {
+        return {
+            isOver(now: number): boolean {
+                return startTime + duration <= now
+            },
+            getState(now: number): [number, number, number] {
+                if (this.isOver(now)) {
+                    return [eX, eY, ePhi]
+                }
+                const t = (now - startTime) / duration
+                return [
+                    sX + (eX - sX) * t,
+                    sY + (eY - sY) * t,
+                    sPhi + (ePhi - sPhi) * t,
+                ]
+            },
+            get isDrawing(): boolean {
+                return isDrawing
+            }
+        }
+    }
+}
+
+const animationQueueTemplate = [
+    MoveToAnimation(500, 200, 250, 0),
+    MoveToAnimation(1000, -200, 250, pi * 3 / 4, true),
+    MoveToAnimation(1500, 0, 450, pi / 2 , true),
+    MoveToAnimation(1500, 200, 250, pi / 3, true),
+    MoveToAnimation(500, 200, 150, 0),
+]
+
+const drawing = []
+
 const robot: Robot = {
     th1: pi / 3,
     th2: pi * 3 / 4,
@@ -65,14 +99,40 @@ const settings = {
 };
 
 const sketch = ({context, width, height}) => {
-    let eeX = 250
-    const eeY = 310
-    let phi = pi/3
-    let t = Date.now()
+    let eeX = 200
+    let eeY = 150
+    let phi = 0
+    let now = Date.now()
+
+    let animationQueue = []
+    let currentAnimation = undefined
+
     return ({context: CanvasRenderingContext2D, width, height}) => {
-        t = Date.now()
-        eeX = 100 + 150 * sin(t / 400)
-        phi = pi/6 + (1 + sin(t / 400)) * pi / 3
+        now = Date.now()
+
+        if (currentAnimation) {
+            if (currentAnimation.isOver(now)) {
+                currentAnimation = undefined
+            } else {
+                const [eX, eY, ePhi] = currentAnimation.getState(now)
+                eeX = eX
+                eeY = eY
+                phi = ePhi
+
+                if (currentAnimation.isDrawing) {
+                    drawing.push([eX, eY])
+                }
+            }
+        } else {
+            if (animationQueue.length == 0) {
+                animationQueue = animationQueueTemplate.slice()
+            }
+
+            if (animationQueue.length > 0) {
+                currentAnimation = animationQueue.shift()(now, eeX, eeY, phi)
+            }
+        }
+
         const state = solveInverseKinematics(eeX, eeY, phi, robot)
         robot.th1 = state.th1
         robot.th2 = state.th2
@@ -89,6 +149,13 @@ const sketch = ({context, width, height}) => {
         context.beginPath()
         context.ellipse(eeX, -eeY, 10, 10, 0, 0, 2 * pi)
         context.fill()
+
+        context.fillStyle = `rgba(255, 165, 0, 0.5)`
+        for (let [x, y] of drawing) {
+            context.beginPath()
+            context.ellipse(x, -y, 10, 10, 0, 0, 2 * pi)
+            context.fill()
+        }
 
         context.restore();
     }
