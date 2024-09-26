@@ -18,6 +18,23 @@ const ORANGE = '#FFA500' // rgb(255, 165, 0)
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
 
+function easeInOut(t: number): number {
+    if (t < 0.5) {
+        return 2 * t * t;
+    } else {
+        return 1 - 2 * (1 - t) * (1 - t);
+    }
+}
+
+function circleEaseInOut(t: number): number {
+    return Math.sqrt(1 - (t - 1) ** 2)
+}
+
+function sineEaseInOut(t: number): number {
+    return sin(t * pi / 2)
+}
+
+
 const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number, isDrawing: boolean = false) => {
     return (startTime: number, sX: number, sY: number, sPhi: number) => {
         return {
@@ -28,7 +45,7 @@ const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number,
                 if (this.isOver(now)) {
                     return [eX, eY, ePhi]
                 }
-                const t = (now - startTime) / duration
+                const t = sineEaseInOut((now - startTime) / duration)
                 return [
                     sX + (eX - sX) * t,
                     sY + (eY - sY) * t,
@@ -132,20 +149,24 @@ const sketch = ({context, width, height}) => {
         context.fillRect(0, 0, width, height);
         context.save()
         context.translate(width / 2, height / 2);
-        drawBase(context, 80, 4, GREEN)
-        drawRobot(context)
 
-        context.fillStyle = PINK
-        context.beginPath()
-        context.ellipse(eeX, -eeY, 10, 10, 0, 0, 2 * pi)
-        context.fill()
-
+        // draw scene
         context.fillStyle = `rgba(255, 165, 0, 0.5)`
         for (let [x, y] of drawing) {
             context.beginPath()
             context.ellipse(x, -y, 10, 10, 0, 0, 2 * pi)
             context.fill()
         }
+
+        drawBase(context, 80, 4, GREEN)
+        drawRobot(context)
+
+        // draw end-effector
+        context.fillStyle = PINK
+        context.beginPath()
+        context.ellipse(eeX, -eeY, 10, 10, 0, 0, 2 * pi)
+        context.fill()
+
 
         context.restore();
     }
@@ -164,10 +185,12 @@ start().catch(console.error);
     - draw on/off
     - choose color
     - fade out scene
+    - pause
+    - terminate animation loop
  - find an angle to ensure state consistency, should be close to the previous angle
  - find solvable trajectory (angle should allow for the solution existence along the way)
- - try different easing functions
  - vectorize drawn segments, vectorize the segment being drawn but not complete
  - find a parametric description of a heart
  - try shaders to make certain part of a scene glow
+ - support pause animations
  */
