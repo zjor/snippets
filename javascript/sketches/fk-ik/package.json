@@ -6,6 +6,7 @@
   "scripts": {
     "start": "webpack-dev-server --open",
     "dev": "canvas-sketch-cli sketch.js",
+    "test": "jest",
     "build": "webpack"
   },
   "keywords": [],
@@ -15,10 +16,14 @@
     "canvas-sketch": "^0.7.7"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.13",
     "@types/node": "^22.5.5",
     "copy-webpack-plugin": "^12.0.2",
     "html-webpack-plugin": "^5.6.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.2",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4",
