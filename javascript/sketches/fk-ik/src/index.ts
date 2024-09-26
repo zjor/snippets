@@ -1,6 +1,7 @@
 import canvasSketch from 'canvas-sketch'
 import {drawPieCircle, drawArmLink} from "./geometry"
 import {Robot, solveInverseKinematics} from "./kinematics"
+import {CircularBuffer} from "./util";
 
 const {PI: pi, sin, cos} = Math
 
@@ -41,13 +42,13 @@ const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number,
     }
 }
 
-const animationQueueTemplate = [
+const animationQueueTemplate = CircularBuffer([
     MoveToAnimation(500, 200, 250, 0),
     MoveToAnimation(1000, -200, 250, pi * 3 / 4, true),
-    MoveToAnimation(1500, 0, 450, pi / 2 , true),
+    MoveToAnimation(1500, 0, 450, pi / 2, true),
     MoveToAnimation(1500, 200, 250, pi / 3, true),
     MoveToAnimation(500, 200, 150, 0),
-]
+])
 
 const drawing = []
 
@@ -104,32 +105,21 @@ const sketch = ({context, width, height}) => {
     let phi = 0
     let now = Date.now()
 
-    let animationQueue = []
-    let currentAnimation = undefined
+    let currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
 
     return ({context: CanvasRenderingContext2D, width, height}) => {
         now = Date.now()
 
-        if (currentAnimation) {
-            if (currentAnimation.isOver(now)) {
-                currentAnimation = undefined
-            } else {
-                const [eX, eY, ePhi] = currentAnimation.getState(now)
-                eeX = eX
-                eeY = eY
-                phi = ePhi
-
-                if (currentAnimation.isDrawing) {
-                    drawing.push([eX, eY])
-                }
-            }
+        if (currentAnimation.isOver(now)) {
+            currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
         } else {
-            if (animationQueue.length == 0) {
-                animationQueue = animationQueueTemplate.slice()
-            }
+            const [eX, eY, ePhi] = currentAnimation.getState(now)
+            eeX = eX
+            eeY = eY
+            phi = ePhi
 
-            if (animationQueue.length > 0) {
-                currentAnimation = animationQueue.shift()(now, eeX, eeY, phi)
+            if (currentAnimation.isDrawing) {
+                drawing.push([eX, eY])
             }
         }
 
