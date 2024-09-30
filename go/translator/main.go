@@ -66,5 +66,5 @@ func main() {
 	}
 }
 
-//TODO: add readme: https://github.com/soimort/translate-shell
-//TODO: ensure the tool is installed
+// TODO: ensure the tool is installed
+// TODO: ensure ~/.trans/words.txt exists
