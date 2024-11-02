@@ -34,6 +34,46 @@ function sineEaseInOut(t: number): number {
     return sin(t * pi / 2)
 }
 
+type Point = [number, number]
+
+type ParametricFunction = (t: number) => [x: number, y: number, phi: number]
+
+const GetLineParametricFunction = (start: Point, end: Point): ParametricFunction => {
+    return t => {
+        const x = start[0] + (end[0] - start[0]) * t
+        const y = start[1] + (end[1] - start[1]) * t
+        // TODO: EE should be normal to the line
+        return [x, y, pi/2]
+    }
+}
+
+const GetHeartParametricFunction = (origin: Point): ParametricFunction => {
+    const [a, b] = [0.5, -2.5]
+    const [scaleX, scaleY] = [10, 10]
+    return t => {
+        t = 2 * pi * t
+        const x = scaleX * (16 * sin(t) ** 3 + a * sin(2 * t))
+        const y = scaleY * (13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t) + b * sin(t))
+        return [origin[0] + x, origin[1] + y, pi/2]
+    }
+}
+
+const ParametricAnimation = (duration: number, func: ParametricFunction, isDrawing: boolean = false) => {
+    return (start: number) => {
+        return  {
+            isOver(now: number): boolean {
+                return start + duration <= now
+            },
+            getState(now: number): [number, number, number] {
+                const t = this.isOver(now) ? 1.0 : sineEaseInOut((now - start) / duration)
+                return func(t)
+            },
+            get isDrawing(): boolean {
+                return isDrawing
+            }
+        }
+    }
+}
 
 const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number, isDrawing: boolean = false) => {
     return (startTime: number, sX: number, sY: number, sPhi: number) => {
@@ -59,13 +99,22 @@ const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number,
     }
 }
 
+// const animationQueueTemplate = CircularBuffer([
+//     MoveToAnimation(500, 200, 250, 0),
+//     MoveToAnimation(1000, -200, 250, pi * 3 / 4, true),
+//     MoveToAnimation(1500, 0, 450, pi / 2, true),
+//     MoveToAnimation(1500, 200, 250, pi / 3, true),
+//     MoveToAnimation(500, 200, 150, 0),
+// ])
+
+const [tx, ty, _] = GetHeartParametricFunction([200, 250])(0)
+
 const animationQueueTemplate = CircularBuffer([
-    MoveToAnimation(500, 200, 250, 0),
-    MoveToAnimation(1000, -200, 250, pi * 3 / 4, true),
-    MoveToAnimation(1500, 0, 450, pi / 2, true),
-    MoveToAnimation(1500, 200, 250, pi / 3, true),
-    MoveToAnimation(500, 200, 150, 0),
+    ParametricAnimation(500, GetLineParametricFunction([150, 50], [tx, ty]), false),
+    ParametricAnimation(4000, GetHeartParametricFunction([200, 250]), true),
+    ParametricAnimation(500, GetLineParametricFunction([tx, ty], [150, 50]), false),
 ])
+
 
 const drawing = []
 
@@ -117,8 +166,8 @@ const settings = {
 };
 
 const sketch = ({context, width, height}) => {
-    let eeX = 200
-    let eeY = 150
+    let eeX = 150
+    let eeY = 50
     let phi = 0
     let now = Date.now()
 
