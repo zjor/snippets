@@ -1,7 +1,7 @@
 import canvasSketch from 'canvas-sketch'
 import {drawPieCircle, drawArmLink} from "./geometry"
 import {Robot, solveInverseKinematics} from "./kinematics"
-import {CircularBuffer} from "./util";
+import {CircularBuffer, StoppableTime} from "./util";
 
 const {PI: pi, sin, cos} = Math
 
@@ -134,7 +134,6 @@ const animationQueueTemplate = CircularBuffer([
     // ParametricAnimation(4000, GetHeartParametricFunction([200, 250]), true),
     ParametricAnimation(2000, GetLineParametricFunction(startPoint, endPoint), true),
     ParametricAnimation(1500, GetEndEffectorRotationFunction(endPoint, normalAngleReversed, normalAngle), false),
-
 ])
 
 
@@ -187,21 +186,19 @@ const settings = {
     animate: true
 };
 
-let paused: boolean = true
+const time = StoppableTime(true)
 
 const sketch = ({context, width, height}) => {
     let eeX = 150
     let eeY = 50
     let phi = 0
     // TODO: treat time as something that could be stopped
-    let now = Date.now()
+    let now = time.now()
 
     let currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
 
     return ({context: CanvasRenderingContext2D, width, height}) => {
-        if (!paused) {
-            now = Date.now()
-        }
+        now = time.now()
 
         if (currentAnimation.isOver(now)) {
             currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
@@ -254,7 +251,7 @@ const start = async () => {
 
 start().catch(console.error);
 
-window.addEventListener('click', _ => paused = !paused)
+window.addEventListener('click', _ => time.toggleStop())
 
 /*
  TODO:
