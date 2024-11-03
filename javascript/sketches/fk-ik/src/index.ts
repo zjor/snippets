@@ -38,12 +38,27 @@ type Point = [number, number]
 
 type ParametricFunction = (t: number) => [x: number, y: number, phi: number]
 
-const GetLineParametricFunction = (start: Point, end: Point): ParametricFunction => {
+function getNormalAngle(start: Point, end: Point, reverse: boolean = false): number {
+    const [x1, y1] = start
+    const [x2, y2] = end
+    const a = y2 - y1
+    const b = -(x2 - x1)
+    return reverse ? Math.atan2(-b, -a) : Math.atan2(b, a)
+}
+
+const GetLineParametricFunction = (start: Point, end: Point, reverseNormal: boolean = false): ParametricFunction => {
+    const [x1, y1] = start
+    const [x2, y2] = end
     return t => {
-        const x = start[0] + (end[0] - start[0]) * t
-        const y = start[1] + (end[1] - start[1]) * t
-        // TODO: EE should be normal to the line
-        return [x, y, pi/2]
+        const x = x1 + (x2 - x1) * t
+        const y = y1 + (y2 - y1) * t
+        return [x, y, getNormalAngle(start, end, reverseNormal)]
+    }
+}
+
+const GetEndEffectorRotationFunction = (position: Point, startAngle: number, endAngle: number): ParametricFunction => {
+    return t => {
+        return [position[0], position[1], startAngle + (endAngle - startAngle) * t]
     }
 }
 
@@ -54,13 +69,13 @@ const GetHeartParametricFunction = (origin: Point): ParametricFunction => {
         t = 2 * pi * t
         const x = scaleX * (16 * sin(t) ** 3 + a * sin(2 * t))
         const y = scaleY * (13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t) + b * sin(t))
-        return [origin[0] + x, origin[1] + y, pi/2]
+        return [origin[0] + x, origin[1] + y, pi / 2]
     }
 }
 
 const ParametricAnimation = (duration: number, func: ParametricFunction, isDrawing: boolean = false) => {
     return (start: number) => {
-        return  {
+        return {
             isOver(now: number): boolean {
                 return start + duration <= now
             },
@@ -108,11 +123,18 @@ const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number,
 // ])
 
 const [tx, ty, _] = GetHeartParametricFunction([200, 250])(0)
+const startPoint: Point = [-50, 280]
+const endPoint: Point = [200, 120]
+const normalAngle = getNormalAngle(endPoint, startPoint)
+const normalAngleReversed = getNormalAngle(endPoint, startPoint, true)
 
 const animationQueueTemplate = CircularBuffer([
-    ParametricAnimation(500, GetLineParametricFunction([150, 50], [tx, ty]), false),
-    ParametricAnimation(4000, GetHeartParametricFunction([200, 250]), true),
-    ParametricAnimation(500, GetLineParametricFunction([tx, ty], [150, 50]), false),
+    ParametricAnimation(2000, GetLineParametricFunction(endPoint, startPoint), false),
+    ParametricAnimation(1500, GetEndEffectorRotationFunction(startPoint, normalAngle, normalAngleReversed), false),
+    // ParametricAnimation(4000, GetHeartParametricFunction([200, 250]), true),
+    ParametricAnimation(2000, GetLineParametricFunction(startPoint, endPoint), true),
+    ParametricAnimation(1500, GetEndEffectorRotationFunction(endPoint, normalAngleReversed, normalAngle), false),
+
 ])
 
 
@@ -165,16 +187,21 @@ const settings = {
     animate: true
 };
 
+let paused: boolean = true
+
 const sketch = ({context, width, height}) => {
     let eeX = 150
     let eeY = 50
     let phi = 0
+    // TODO: treat time as something that could be stopped
     let now = Date.now()
 
     let currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
 
     return ({context: CanvasRenderingContext2D, width, height}) => {
-        now = Date.now()
+        if (!paused) {
+            now = Date.now()
+        }
 
         if (currentAnimation.isOver(now)) {
             currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
@@ -216,7 +243,6 @@ const sketch = ({context, width, height}) => {
         context.ellipse(eeX, -eeY, 10, 10, 0, 0, 2 * pi)
         context.fill()
 
-
         context.restore();
     }
 }
@@ -227,6 +253,8 @@ const start = async () => {
 };
 
 start().catch(console.error);
+
+window.addEventListener('click', _ => paused = !paused)
 
 /*
  TODO:
