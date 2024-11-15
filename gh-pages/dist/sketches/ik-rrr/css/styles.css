@@ -1,0 +1,22 @@
+html, body {
+    margin: 0;
+}
+#app {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header {
+    min-width: 325px;
+    font-size: 2em;
+    padding-bottom: 0.5em;
+    border-bottom: #1a1a1a solid 1px;
+}
+
+#canvas {
+}

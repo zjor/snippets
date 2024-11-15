@@ -274,7 +274,7 @@ const sketch = ({context, width, height}) => {
 
     let currentAnimation = animationQueueTemplate.next()(now, eeX, eeY, phi)
 
-    return ({context: CanvasRenderingContext2D, width, height}) => {
+    return ({context: CanvasRenderingContext2D, width, height, frame}) => {
         now = time.now()
 
         if (currentAnimation.isOver(now)) {
@@ -286,7 +286,7 @@ const sketch = ({context, width, height}) => {
             phi = ePhi
 
             if (currentAnimation.isDrawing) {
-                drawing.push([eX, eY])
+                drawing.push([eX, eY, frame])
             }
         }
 
@@ -301,10 +301,12 @@ const sketch = ({context, width, height}) => {
         context.translate(width / 2, height / 2);
 
         // draw scene
-        context.fillStyle = ROSE
-        for (let [x, y] of drawing) {
+        for (let i = 0; i < drawing.length; i++) {
+            const [x, y, creationFrame] = drawing[i]
+            const age = 1 - 0.01 * (frame - creationFrame)
             context.beginPath()
             context.ellipse(x, -y, 10, 10, 0, 0, 2 * pi)
+            context.fillStyle = `rgba(253, 68, 153, ${age})`
             context.fill()
         }
 

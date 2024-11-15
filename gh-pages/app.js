@@ -7,6 +7,12 @@ createApp({
 
     const sketchItems = [
       {
+        href: `${URL_PREFIX}/dist/sketches/ik-rrr/index.html`,
+        img: `${URL_PREFIX}/images/ik-preview.png`,
+        alt: 'ik-rrr',
+        description: 'Endlessly fading love...'
+      },
+      {
         href: `${URL_PREFIX}/dist/sketches/rr-chasing-the-star.html`,
         img: `${URL_PREFIX}/images/rr-chasing-the-star-preview.png`,
         alt: 'rr-chasing-the-star',
