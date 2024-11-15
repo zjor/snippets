@@ -1,5 +1,5 @@
 import canvasSketch from 'canvas-sketch'
-import {drawPieCircle, drawArmLink} from "./geometry"
+import {drawArmLink, drawPieCircle} from "./geometry"
 import {Robot, solveInverseKinematics} from "./kinematics"
 import {CircularBuffer, StoppableTime} from "./util";
 
@@ -17,6 +17,25 @@ const RED = '#CF0000'
 const ORANGE = '#FFA500' // rgb(255, 165, 0)
 const YELLOW = '#FFE62D'
 const PINK = '#DF19FB'
+
+const robot: Robot = {
+    th1: pi / 3,
+    th2: pi * 3 / 4,
+    th3: -pi / 2,
+    l1: 250,
+    l2: 200,
+    l3: 150,
+    unsolvable: false
+}
+
+function shuffle<T>(array: T[]): T[] {
+    const clone = [...array];
+    for (let i = clone.length - 1; i > 0; i--) {
+        const randomIndex = Math.floor(Math.random() * (i + 1));
+        [clone[i], clone[randomIndex]] = [clone[randomIndex], clone[i]];
+    }
+    return clone;
+}
 
 function easeInOut(t: number): number {
     if (t < 0.5) {
@@ -36,6 +55,7 @@ function sineEaseInOut(t: number): number {
 
 type Point = [number, number]
 
+type CurveFunction = (t: number) => [x: number, y: number]
 type ParametricFunction = (t: number) => [x: number, y: number, phi: number]
 
 function getNormalAngle(start: Point, end: Point, reverse: boolean = false): number {
@@ -56,6 +76,56 @@ const GetLineParametricFunction = (start: Point, end: Point, reverseNormal: bool
     }
 }
 
+const GetPhiSolver = (
+    func: CurveFunction,
+    bestCandidateFunc: (t: number) => number
+    ): (t: number) => number => {
+
+    const CONTROL_POINTS = 2
+    const points = []
+    for (let i = 0; i <= CONTROL_POINTS; i++) {
+        const t = i / CONTROL_POINTS
+        const [x, y] = func(t)
+        const candidates = [bestCandidateFunc(t)]
+        for (let j = candidates[0]; j < candidates[0] + pi; j += pi / 12) {
+            candidates.push(j)
+        }
+
+        for (let phi of candidates) {
+            const state = solveInverseKinematics(x, y, phi, robot)
+            if (!state.unsolvable) {
+                points.push(phi)
+                break
+            }
+        }
+    }
+
+    return t => {
+        const iStart = Math.floor(t * CONTROL_POINTS)
+        const iEnd = Math.ceil(t * CONTROL_POINTS)
+        const [phiStart, phiEnd] = [points[iStart], points[iEnd]]
+        return phiStart + (phiEnd - phiStart) * (t * CONTROL_POINTS - Math.floor(t * CONTROL_POINTS))
+    }
+
+}
+
+const GetCircularParametricFunction = (center: Point, radius: number): ParametricFunction => {
+    const curveFunc: CurveFunction = (t: number) => {
+        t = 2 * pi * t
+        return [
+            center[0] + radius * cos(t),
+            center[1] + radius * 0.5 * sin(t)
+        ]
+    }
+
+    const phiSolver = GetPhiSolver(curveFunc, t => Math.atan2(sin(2 * pi * t), 0.5 * cos(2 * pi * t)))
+
+    return t => {
+        const [x, y] = curveFunc(t)
+        return [x, y, phiSolver(t)]
+    }
+}
+
 const GetEndEffectorRotationFunction = (position: Point, startAngle: number, endAngle: number): ParametricFunction => {
     return t => {
         return [position[0], position[1], startAngle + (endAngle - startAngle) * t]
@@ -65,12 +135,19 @@ const GetEndEffectorRotationFunction = (position: Point, startAngle: number, end
 const GetHeartParametricFunction = (origin: Point): ParametricFunction => {
     const [a, b] = [0.5, -2.5]
     const [scaleX, scaleY] = [10, 10]
-    return t => {
+    const curveFunc: CurveFunction = t => {
         t = 2 * pi * t
         const x = scaleX * (16 * sin(t) ** 3 + a * sin(2 * t))
         const y = scaleY * (13 * cos(t) - 5 * cos(2 * t) - 2 * cos(3 * t) - cos(4 * t) + b * sin(t))
-        return [origin[0] + x, origin[1] + y, pi / 2]
+        return [origin[0] + x, origin[1] + y]
     }
+    const phiSolver = GetPhiSolver(curveFunc, t => Math.atan2(sin(2 * pi * t), 0.5 * cos(2 * pi * t)))
+
+    return t => {
+        const [x, y] = curveFunc(t)
+        return [x, y, phiSolver(t)]
+    }
+
 }
 
 const ParametricAnimation = (duration: number, func: ParametricFunction, isDrawing: boolean = false) => {
@@ -122,31 +199,31 @@ const MoveToAnimation = (duration: number, eX: number, eY: number, ePhi: number,
 //     MoveToAnimation(500, 200, 150, 0),
 // ])
 
-const [tx, ty, _] = GetHeartParametricFunction([200, 250])(0)
-const startPoint: Point = [-50, 280]
-const endPoint: Point = [200, 120]
+const startPoint: Point = [200, 100]
+const endPoint: Point = [200, 350]
+const [tx, ty, _] = GetHeartParametricFunction(endPoint)(0)
+
 const normalAngle = getNormalAngle(endPoint, startPoint)
 const normalAngleReversed = getNormalAngle(endPoint, startPoint, true)
 
+// const animationQueueTemplate = CircularBuffer([
+//     ParametricAnimation(2000, GetLineParametricFunction(endPoint, startPoint), false),
+//     ParametricAnimation(1500, GetEndEffectorRotationFunction(startPoint, normalAngle, normalAngleReversed), false),
+//     // ParametricAnimation(4000, GetHeartParametricFunction([200, 250]), true),
+//     ParametricAnimation(2000, GetLineParametricFunction(startPoint, endPoint), true),
+//     ParametricAnimation(1500, GetEndEffectorRotationFunction(endPoint, normalAngleReversed, normalAngle), false),
+// ])
+
 const animationQueueTemplate = CircularBuffer([
-    ParametricAnimation(2000, GetLineParametricFunction(endPoint, startPoint), false),
-    ParametricAnimation(1500, GetEndEffectorRotationFunction(startPoint, normalAngle, normalAngleReversed), false),
-    // ParametricAnimation(4000, GetHeartParametricFunction([200, 250]), true),
-    ParametricAnimation(2000, GetLineParametricFunction(startPoint, endPoint), true),
-    ParametricAnimation(1500, GetEndEffectorRotationFunction(endPoint, normalAngleReversed, normalAngle), false),
+    // ParametricAnimation(2000, GetLineParametricFunction(startPoint, endPoint), false),
+    // ParametricAnimation(5000, GetCircularParametricFunction(endPoint, 200), true)
+    ParametricAnimation(3000, GetLineParametricFunction(startPoint, [tx, ty]), false),
+    ParametricAnimation(4000, GetHeartParametricFunction(endPoint), true),
+    ParametricAnimation(3000, GetLineParametricFunction([tx, ty], startPoint, true), false),
 ])
 
 
 const drawing = []
-
-const robot: Robot = {
-    th1: pi / 3,
-    th2: pi * 3 / 4,
-    th3: -pi / 2,
-    l1: 250,
-    l2: 200,
-    l3: 150,
-}
 
 function drawRobot(c: CanvasRenderingContext2D) {
     c.save()
@@ -224,7 +301,7 @@ const sketch = ({context, width, height}) => {
         context.translate(width / 2, height / 2);
 
         // draw scene
-        context.fillStyle = `rgba(255, 165, 0, 0.5)`
+        context.fillStyle = ROSE
         for (let [x, y] of drawing) {
             context.beginPath()
             context.ellipse(x, -y, 10, 10, 0, 0, 2 * pi)
@@ -235,10 +312,12 @@ const sketch = ({context, width, height}) => {
         drawRobot(context)
 
         // draw end-effector
-        context.fillStyle = PINK
+        context.fillStyle = currentAnimation.isDrawing ? ROSE : BLACK
         context.beginPath()
         context.ellipse(eeX, -eeY, 10, 10, 0, 0, 2 * pi)
         context.fill()
+        context.strokeStyle = ROSE
+        context.stroke()
 
         context.restore();
     }
