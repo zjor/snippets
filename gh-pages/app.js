@@ -7,6 +7,12 @@ createApp({
 
     const sketchItems = [
       {
+        href: `${URL_PREFIX}/dist/shaders/flame/index.html`,
+        img: `${URL_PREFIX}/images/flame-preview.png`,
+        alt: 'flame',
+        description: 'Flame with shaders'
+      },
+      {
         href: `${URL_PREFIX}/dist/sketches/ik-rrr/index.html`,
         img: `${URL_PREFIX}/images/ik-preview.png`,
         alt: 'ik-rrr',
