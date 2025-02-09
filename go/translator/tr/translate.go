@@ -80,7 +80,7 @@ func (t TranslateResponse) Colorize() string {
 	transcription := transcriptionColor(t.Transcription)
 	translations := strings.Join(t.Translations, ", ")
 	lines := make([]string, 0)
-	lines = append(lines, fmt.Sprintf("\n\t%s - [%s] - %s\n", word, transcription, translations))
+	lines = append(lines, fmt.Sprintf("\n%s - [%s] - %s\n", word, transcription, translations))
 
 	lines = append(lines, fmt.Sprintf("%s: %s",
 		color.New(color.FgGreen, color.Bold).Sprintf("Syn.: "),
@@ -90,7 +90,7 @@ func (t TranslateResponse) Colorize() string {
 		color.New(color.FgRed, color.Bold).Sprintf("Ant.: "),
 		strings.Join(t.Antonyms, ", ")))
 
-	lines = append(lines, color.New(color.FgHiWhite, color.Bold, color.Underline).Sprintf("Examples:"))
+	lines = append(lines, color.New(color.FgHiWhite, color.Bold, color.Underline).Sprintf("\nExamples:"))
 	for _, example := range t.Examples {
 		lines = append(lines, fmt.Sprintf("\t- %s", example))
 	}
@@ -123,12 +123,4 @@ func Translate(word string) TranslateResponse {
 	}
 	data := chatCompletion.Choices[0].Message.Content
 	return NewTranslation(data)
-}
-
-func formatList(list []interface{}) string {
-	items := make([]string, len(list))
-	for i, v := range list {
-		items[i] = fmt.Sprintf("%s", v)
-	}
-	return strings.Join(items, ", ")
 }

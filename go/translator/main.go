@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
 	"os/exec"
 	"royz.cc/translator/tr"
+	"strings"
 	"time"
 )
 
@@ -44,7 +46,16 @@ func translate(word string, isReversed bool) string {
 	return string(output)
 }
 
+var EnvOpenaiApiKey = "OPENAI_API_KEY"
+
 func main() {
+
+	_, ok := os.LookupEnv(EnvOpenaiApiKey)
+	if !ok {
+		fmt.Printf("%s is not set\n", color.New(color.FgHiWhite, color.Bold).Sprintf(EnvOpenaiApiKey))
+		return
+	}
+
 	app := &cli.App{
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -55,14 +66,18 @@ func main() {
 			},
 		},
 		Action: func(ctx *cli.Context) error {
-			word := ctx.Args().Get(0)
-			if len(word) == 0 {
-				fmt.Println("The word is empty")
+			args := ctx.Args()
+			var phrase string
+			if args.Len() == 0 {
+				fmt.Println("Please enter some text to translate")
 				return nil
+			} else if args.Len() == 1 {
+				phrase = args.Get(0)
+			} else {
+				phrase = strings.Join(args.Slice(), " ")
 			}
-			// TODO: handle empty word
 			// TODO: handle reverse language
-			fmt.Println(tr.Translate(word).Colorize())
+			fmt.Println(tr.Translate(phrase).Colorize())
 			return nil
 		},
 	}
