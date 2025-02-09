@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"royz.cc/translator/tr"
 	"time"
 )
 
@@ -55,8 +56,13 @@ func main() {
 		},
 		Action: func(ctx *cli.Context) error {
 			word := ctx.Args().Get(0)
-			//TODO: handle empty word
-			fmt.Println(translate(word, ctx.Bool("reverse")))
+			if len(word) == 0 {
+				fmt.Println("The word is empty")
+				return nil
+			}
+			// TODO: handle empty word
+			// TODO: handle reverse language
+			fmt.Println(tr.Translate(word).Colorize())
 			return nil
 		},
 	}
