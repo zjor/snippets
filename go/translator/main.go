@@ -6,7 +6,6 @@ import (
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
-	"os/exec"
 	"royz.cc/translator/tr"
 	"strings"
 	"time"
@@ -26,24 +25,6 @@ func storeWord(word string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func translate(word string, isReversed bool) string {
-	defer storeWord(word)
-
-	direction := func() string {
-		if isReversed {
-			return "ru:"
-		} else {
-			return ":ru"
-		}
-	}()
-	cmd := exec.Command("trans", direction, word)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return string(output)
 }
 
 var EnvOpenaiApiKey = "OPENAI_API_KEY"

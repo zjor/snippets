@@ -5,74 +5,44 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
 	"log"
 	"strings"
 )
 
 var PROMPT = `
-Translate the word "%s" into Russian, give a response according to the schema:
-
-## Schema
-
-{
-	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"type": "object",
-	"required": ["word", "translations", "examples"],
-	"properties": {		
-		"word": {
-			"type": "string",
-			"description": "A word in the original language being translated"
-		},
-		"translations": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "A list of possible translations into the target language"
-		},
-		"transcription": {
-			"type": "string",
-			"description": "A transcription of the original word"
-		},
-		"synonyms": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "A list of word with a similar meaning in the original language"
-		},
-		"antonyms": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "A list of words with an opposite meaning in the original language"
-		},
-		"examples": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "Sentences using the original word in the original language"
-		}
-	}
-}
-
----
-Always return raw JSON without any additional markdown
+## Task:
+- Translate "%[1]s" from %[2]s into %[3]s.
+- If there are typos, correct them first
+- If the input is a single word:
+	- Provide up to three translations.
+	- Provide a transcription if possible but only for the "%[1]s"
+	- Provide up to three synonyms in the %[2]s language.
+	- Provide up to three antonyms in the %[2]s language.
+	- Provide up to two examples of usage of the original word in the %[2]s language.
 `
 
-type TranslateResponse struct {
-	Word          string   `json:"word"`
-	Translations  []string `json:"translations"`
-	Transcription string   `json:"transcription"`
-	Synonyms      []string `json:"synonyms"`
-	Antonyms      []string `json:"antonyms"`
-	Examples      []string `json:"examples"`
+type TranslationResponse struct {
+	Word          string   `json:"word" jsonschema_description:"Original word provided"`
+	Translations  []string `json:"translations" jsonschema_description:"Translations of the word or phrase provided"`
+	Transcription string   `json:"transcription" jsonschema_description:"Transcription of the word provided if available"`
+	Synonyms      []string `json:"synonyms" jsonschema_description:"Synonyms of the word provided"`
+	Antonyms      []string `json:"antonyms" jsonschema_description:"Antonyms of the word provided"`
+	Examples      []string `json:"examples" jsonschema_description:"Examples of usage of the word or a phrase provided"`
 }
 
-func (t TranslateResponse) Colorize() string {
+func GenerateSchema[T any]() interface{} {
+	reflector := jsonschema.Reflector{
+		AllowAdditionalProperties: false,
+		DoNotReference:            true,
+	}
+	var v T
+	schema := reflector.Reflect(v)
+	return schema
+}
+
+func (t TranslationResponse) Colorize() string {
 	wordColor := color.New(color.FgHiMagenta, color.Bold, color.Underline).SprintFunc()
 	transcriptionColor := color.New(color.FgBlue).SprintFunc()
 
@@ -82,7 +52,7 @@ func (t TranslateResponse) Colorize() string {
 	lines := make([]string, 0)
 	lines = append(lines, fmt.Sprintf("\n%s - [%s] - %s\n", word, transcription, translations))
 
-	lines = append(lines, fmt.Sprintf("%s: %s",
+	lines = append(lines, fmt.Sprintf("%s%s",
 		color.New(color.FgGreen, color.Bold).Sprintf("Syn.: "),
 		strings.Join(t.Synonyms, ", ")))
 
@@ -98,8 +68,8 @@ func (t TranslateResponse) Colorize() string {
 	return strings.Join(lines, "\n")
 }
 
-func NewTranslation(jsonData string) TranslateResponse {
-	var entry TranslateResponse
+func NewTranslation(jsonData string) TranslationResponse {
+	var entry TranslationResponse
 	err := json.Unmarshal([]byte(jsonData), &entry)
 	if err != nil {
 		log.Fatalf("Error parsing JSON: %v", err)
@@ -110,13 +80,29 @@ func NewTranslation(jsonData string) TranslateResponse {
 // defaults to os.LookupEnv("OPENAI_API_KEY")
 var client = openai.NewClient()
 
-func Translate(word string) TranslateResponse {
-	prompt := fmt.Sprintf(PROMPT, word)
+var TranslationResponseSchema = GenerateSchema[TranslationResponse]()
+
+func Translate(word string) TranslationResponse {
+	prompt := fmt.Sprintf(PROMPT, word, "English", "Russian")
+
+	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
+		Name:        openai.F("translation"),
+		Description: openai.F("Translation response format"),
+		Schema:      openai.F(TranslationResponseSchema),
+		Strict:      openai.Bool(true),
+	}
+
 	chatCompletion, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage(prompt),
 		}),
 		Model: openai.F(openai.ChatModelGPT4oMini),
+		N:     openai.Int(1),
+		ResponseFormat: openai.F[openai.ChatCompletionNewParamsResponseFormatUnion](
+			openai.ResponseFormatJSONSchemaParam{
+				Type:       openai.F(openai.ResponseFormatJSONSchemaTypeJSONSchema),
+				JSONSchema: openai.F(schemaParam),
+			}),
 	})
 	if err != nil {
 		panic(err.Error())
