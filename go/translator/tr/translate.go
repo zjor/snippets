@@ -11,6 +11,16 @@ import (
 	"strings"
 )
 
+const (
+	English  = "English"
+	Russian  = "Russian"
+	Spanish  = "Spanish"
+	Czech    = "Czech"
+	German   = "German"
+	Italian  = "Italian"
+	Japanese = "Japanese"
+)
+
 var PROMPT = `
 ## Task:
 - Translate "%[1]s" from %[2]s into %[3]s.
@@ -111,6 +121,6 @@ func TranslateWithLanguages(word string, from string, to string) TranslationResp
 	return NewTranslation(data)
 }
 
-func Translate(word string) TranslationResponse {
-	return TranslateWithLanguages(word, "English", "Russian")
+func Translate(word string, from string, to string) TranslationResponse {
+	return TranslateWithLanguages(word, from, to)
 }

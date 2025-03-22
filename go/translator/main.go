@@ -29,6 +29,27 @@ func storeWord(word string) {
 
 var EnvOpenaiApiKey = "OPENAI_API_KEY"
 
+func parseFromLanguage(from string) string {
+	switch from {
+	case "en":
+		return tr.English
+	case "ru":
+		return tr.Russian
+	case "de":
+		return tr.German
+	case "es":
+		return tr.Spanish
+	case "it":
+		return tr.Italian
+	case "ja":
+		return tr.Japanese
+	case "cz":
+		return tr.Czech
+	default:
+		return tr.English
+	}
+}
+
 func main() {
 
 	_, ok := os.LookupEnv(EnvOpenaiApiKey)
@@ -45,6 +66,11 @@ func main() {
 				Usage:   "Reverses translation direction",
 				Value:   false,
 			},
+			&cli.StringFlag{
+				Name:  "from",
+				Usage: "Translate from this language",
+				Value: "en",
+			},
 		},
 		Action: func(ctx *cli.Context) error {
 			args := ctx.Args()
@@ -57,16 +83,17 @@ func main() {
 			} else {
 				phrase = strings.Join(args.Slice(), " ")
 			}
-			
+
 			var result tr.TranslationResponse
+			var from = parseFromLanguage(ctx.String("from"))
+			var to = tr.Russian
+
 			if ctx.Bool("reverse") {
-				// Reverse direction: Russian to English
-				result = tr.TranslateWithLanguages(phrase, "Russian", "English")
+				result = tr.TranslateWithLanguages(phrase, to, from)
 			} else {
-				// Default direction: English to Russian
-				result = tr.Translate(phrase)
+				result = tr.Translate(phrase, from, to)
 			}
-			
+
 			fmt.Println(result.Colorize())
 			return nil
 		},

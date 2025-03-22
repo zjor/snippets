@@ -23,56 +23,8 @@ sudo mv gt /usr/local/bin
 
 ## TODO
 
+- guide a user through the initial configuration
 - use OpenAI or DeepSeek for translations
-- use the prompt below
-
-```
-Translate the word "proclivity" into Russian, give a response according to the schema:
-```
-
-**Schema**
-```json
-{
-	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"type": "object",
-	"required": ["word", "translations", "examples"],
-	"properties": {		
-		"word": {
-			"type": "string",
-			"description": "A word in the original language being translated"
-		},
-		"translations": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "A list of possible translations into the target language"
-		},
-		"transcription": {
-			"type": "string",
-			"description": "A transcription of the original word"
-		},
-		"synonyms": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "A list of word with a similar meaning in the original language"
-		},
-		"antonyms": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "A list of words with an opposite meaning in the original language"
-		},
-		"examples": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			},
-			"description": "Sentences using the original word in the original language"
-		}
-	}
-}
-```
+- if a phrase is provided, do not return transcription and synonyms/antonyms/examples, just a translation; maybe change the prompt in this case
+- return command version
+- allow language selection
