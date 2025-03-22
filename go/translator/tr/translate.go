@@ -82,8 +82,8 @@ var client = openai.NewClient()
 
 var TranslationResponseSchema = GenerateSchema[TranslationResponse]()
 
-func Translate(word string) TranslationResponse {
-	prompt := fmt.Sprintf(PROMPT, word, "English", "Russian")
+func TranslateWithLanguages(word string, from string, to string) TranslationResponse {
+	prompt := fmt.Sprintf(PROMPT, word, from, to)
 
 	schemaParam := openai.ResponseFormatJSONSchemaJSONSchemaParam{
 		Name:        openai.F("translation"),
@@ -109,4 +109,8 @@ func Translate(word string) TranslationResponse {
 	}
 	data := chatCompletion.Choices[0].Message.Content
 	return NewTranslation(data)
+}
+
+func Translate(word string) TranslationResponse {
+	return TranslateWithLanguages(word, "English", "Russian")
 }

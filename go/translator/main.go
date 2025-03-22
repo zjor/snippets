@@ -57,8 +57,17 @@ func main() {
 			} else {
 				phrase = strings.Join(args.Slice(), " ")
 			}
-			// AI! handle reverse language
-			fmt.Println(tr.Translate(phrase).Colorize())
+			
+			var result tr.TranslationResponse
+			if ctx.Bool("reverse") {
+				// Reverse direction: Russian to English
+				result = tr.TranslateWithLanguages(phrase, "Russian", "English")
+			} else {
+				// Default direction: English to Russian
+				result = tr.Translate(phrase)
+			}
+			
+			fmt.Println(result.Colorize())
 			return nil
 		},
 	}
