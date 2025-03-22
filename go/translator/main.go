@@ -57,7 +57,7 @@ func main() {
 			} else {
 				phrase = strings.Join(args.Slice(), " ")
 			}
-			// TODO: handle reverse language
+			// AI! handle reverse language
 			fmt.Println(tr.Translate(phrase).Colorize())
 			return nil
 		},
