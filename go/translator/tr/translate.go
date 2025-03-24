@@ -25,6 +25,7 @@ var PROMPT = `
 ## Task:
 - Translate "%[1]s" from %[2]s into %[3]s.
 - If there are typos, correct them first
+- If the input is a phrase should contain diacritical marks, use them in the output.
 - If the input is a single word:
 	- Provide up to three translations.
 	- Provide a transcription if possible but only for the "%[1]s"
