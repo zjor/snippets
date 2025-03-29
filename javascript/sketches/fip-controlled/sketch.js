@@ -269,7 +269,6 @@ function renderWheel(c, x, y) {
     c.restore()
 
     renderCentroid(c, x, y, 20, -th0 / 2 + phi)
-
 }
 
 /**
