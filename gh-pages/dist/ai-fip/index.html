@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Flywheel Inverted Pendulum controlled by a neural network">
+    <meta name="author" content="Sergey Royz">
+    <title>AI | FIP</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/styles.css">
+    <script type="module" src="../dist/bundle.js"></script>
+<script defer src="bundle.js"></script></head>
+<body>
+<div id="app">
+    <div class="content">
+        <div class="header">
+            <div class="nav">
+                <a href="https://art.royz.cc/"><img src="assets/back-arrow.svg"/></a>
+            </div>
+            <div class="title">
+                <div class="main-title">Flywheel inverted pendulum</div>
+                <div class="subtitle">AI controlled</div>
+            </div>
+            <div class="nav">
+                <a href="https://github.com/zjor/ai-fip"><img src="assets/gh-logo.svg"/></a>
+            </div>
+        </div>
+        <canvas id="canvas" width="800" height="800"></canvas>
+        <div id="drawer">
+            <div id="drawer-handle">
+                <img id="arrow-up" src="assets/arrow-up.svg"/>
+                <img id="arrow-down" class="hidden" src="assets/arrow-down.svg"/>
+            </div>
+            <div id="drawer-content">
+                <div class="chart-container">
+                    <div class="chart">
+                        <div class="chart-title">u</div>
+                        <canvas id="chart-u"></canvas>
+                    </div>
+                    <div class="chart">
+                        <div class="chart-title">Θ</div>
+                        <canvas id="chart-theta"></canvas>
+                    </div>
+                    <div class="chart">
+                        <div class="chart-title">ω</div>
+                        <canvas id="chart-omega"></canvas>
+                    </div>
+                    <div class="chart">
+                        <div class="chart-title">&#x03C6'</div>
+                        <canvas id="chart-phi-dot"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
