@@ -7,6 +7,12 @@ createApp({
 
     const sketchItems = [
       {
+        href: `${URL_PREFIX}/dist/ai-fip/index.html`,
+        img: `${URL_PREFIX}/images/ai-fip-preview.png`,
+        alt: 'AI FIP',
+        description: 'AI controlled FIP'
+      },
+      {
         href: `${URL_PREFIX}/dist/shaders/flame/index.html`,
         img: `${URL_PREFIX}/images/flame-preview.png`,
         alt: 'flame',
