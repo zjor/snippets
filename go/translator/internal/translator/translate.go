@@ -1,14 +1,15 @@
-package tr
+package translator
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/fatih/color"
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
-	"log"
-	"strings"
 )
 
 const (
