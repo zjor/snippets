@@ -8,12 +8,35 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 const (
 	historyDir  = ".gt"
 	historyFile = "words.csv"
+
+	// Table column width limits for readability
+	maxWordColumnWidth         = 25
+	maxTranslationsColumnWidth = 45
 )
+
+// truncateString properly truncates a string by Unicode characters, not bytes
+func truncateString(s string, maxLen int) string {
+	if utf8.RuneCountInString(s) <= maxLen {
+		return s
+	}
+
+	runes := []rune(s)
+	if len(runes) > maxLen-3 {
+		return string(runes[:maxLen-3]) + "..."
+	}
+	return s
+}
+
+// getStringWidth returns the display width of a string in Unicode characters
+func getStringWidth(s string) int {
+	return utf8.RuneCountInString(s)
+}
 
 // getHistoryPath returns the full path to the history directory
 func getHistoryPath() (string, error) {
@@ -140,90 +163,86 @@ func List() {
 
 // printTable formats and prints the translation history as an ASCII table
 func printTable(lines [][]string) {
-	// Calculate column widths
-	maxTimestamp := 19 // "2006-01-02 15:04:05"
-	maxFrom := 4
-	maxTo := 4
-	maxWord := 4
-	maxTranslations := 12
+	// Calculate column widths using Unicode character count
+	timestampWidth := 19 // "2006-01-02 15:04:05"
+	fromWidth := 4
+	toWidth := 4
+	wordWidth := 4
+	translationsWidth := 12
 
 	for _, line := range lines {
 		if len(line) >= 5 {
-			if len(line[1]) > maxFrom {
-				maxFrom = len(line[1])
+			if getStringWidth(line[1]) > fromWidth {
+				fromWidth = getStringWidth(line[1])
 			}
-			if len(line[2]) > maxTo {
-				maxTo = len(line[2])
+			if getStringWidth(line[2]) > toWidth {
+				toWidth = getStringWidth(line[2])
 			}
-			if len(line[3]) > maxWord {
-				maxWord = len(line[3])
+			if getStringWidth(line[3]) > wordWidth {
+				wordWidth = getStringWidth(line[3])
 			}
-			if len(line[4]) > maxTranslations {
-				maxTranslations = len(line[4])
+			if getStringWidth(line[4]) > translationsWidth {
+				translationsWidth = getStringWidth(line[4])
 			}
 		}
 	}
 
 	// Limit column widths for readability
-	if maxWord > 20 {
-		maxWord = 20
+	if wordWidth > maxWordColumnWidth {
+		wordWidth = maxWordColumnWidth
 	}
-	if maxTranslations > 40 {
-		maxTranslations = 40
+	if translationsWidth > maxTranslationsColumnWidth {
+		translationsWidth = maxTranslationsColumnWidth
 	}
 
 	// Print table header
 	fmt.Printf("┌─%s─┬─%s─┬─%s─┬─%s─┬─%s─┐\n",
-		strings.Repeat("─", maxTimestamp),
-		strings.Repeat("─", maxFrom),
-		strings.Repeat("─", maxTo),
-		strings.Repeat("─", maxWord),
-		strings.Repeat("─", maxTranslations))
+		strings.Repeat("─", timestampWidth),
+		strings.Repeat("─", fromWidth),
+		strings.Repeat("─", toWidth),
+		strings.Repeat("─", wordWidth),
+		strings.Repeat("─", translationsWidth))
 
 	fmt.Printf("│ %-*s │ %-*s │ %-*s │ %-*s │ %-*s │\n",
-		maxTimestamp, "Timestamp",
-		maxFrom, "From",
-		maxTo, "To",
-		maxWord, "Word",
-		maxTranslations, "Translations")
+		timestampWidth, "Timestamp",
+		fromWidth, "From",
+		toWidth, "To",
+		wordWidth, "Word",
+		translationsWidth, "Translations")
 
 	fmt.Printf("├─%s─┼─%s─┼─%s─┼─%s─┼─%s─┤\n",
-		strings.Repeat("─", maxTimestamp),
-		strings.Repeat("─", maxFrom),
-		strings.Repeat("─", maxTo),
-		strings.Repeat("─", maxWord),
-		strings.Repeat("─", maxTranslations))
+		strings.Repeat("─", timestampWidth),
+		strings.Repeat("─", fromWidth),
+		strings.Repeat("─", toWidth),
+		strings.Repeat("─", wordWidth),
+		strings.Repeat("─", translationsWidth))
 
 	// Print table rows
 	for _, line := range lines {
 		if len(line) >= 5 {
-			word := line[3]
-			translations := line[4]
+			word := truncateString(line[3], wordWidth)
+			translations := truncateString(line[4], translationsWidth)
 
-			// Truncate if too long
-			if len(word) > maxWord {
-				word = word[:maxWord-3] + "..."
-			}
-			if len(translations) > maxTranslations {
-				translations = translations[:maxTranslations-3] + "..."
-			}
+			// Calculate padding for proper alignment with Unicode characters
+			wordPadding := wordWidth - getStringWidth(word)
+			translationsPadding := translationsWidth - getStringWidth(translations)
 
-			fmt.Printf("│ %-*s │ %-*s │ %-*s │ %-*s │ %-*s │\n",
-				maxTimestamp, line[0],
-				maxFrom, line[1],
-				maxTo, line[2],
-				maxWord, word,
-				maxTranslations, translations)
+			fmt.Printf("│ %-*s │ %-*s │ %-*s │ %s%s │ %s%s │\n",
+				timestampWidth, line[0],
+				fromWidth, line[1],
+				toWidth, line[2],
+				word, strings.Repeat(" ", wordPadding),
+				translations, strings.Repeat(" ", translationsPadding))
 		}
 	}
 
 	// Print table footer
 	fmt.Printf("└─%s─┴─%s─┴─%s─┴─%s─┴─%s─┘\n",
-		strings.Repeat("─", maxTimestamp),
-		strings.Repeat("─", maxFrom),
-		strings.Repeat("─", maxTo),
-		strings.Repeat("─", maxWord),
-		strings.Repeat("─", maxTranslations))
+		strings.Repeat("─", timestampWidth),
+		strings.Repeat("─", fromWidth),
+		strings.Repeat("─", toWidth),
+		strings.Repeat("─", wordWidth),
+		strings.Repeat("─", translationsWidth))
 
 	fmt.Printf("\nShowing last %d translations\n", len(lines))
 }
