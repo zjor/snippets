@@ -43,6 +43,11 @@ Specify source language:
 gt --from de "Guten Tag"
 ```
 
+List translation history (last 15 entries):
+```bash
+gt -l
+```
+
 ## Supported Languages
 
 - English (`en`) - default
@@ -61,8 +66,10 @@ translator/
 │   └── gt/                 # Main application
 │       └── main.go
 ├── internal/
-│   └── translator/         # Translation logic
-│       └── translate.go
+│   ├── translator/         # Translation logic
+│   │   └── translate.go
+│   └── history/            # Translation history management
+│       └── history.go
 ├── bin/                    # Build output (ignored by git)
 ├── go.mod
 ├── go.sum
@@ -85,8 +92,8 @@ Available make targets:
 
 ## TODO
 
-- Store translated words history
-- Display as a table
+- ✅ Store translated words history
+- ✅ Display as a table
 - Guide a user through the initial configuration
 - If a phrase is provided, do not return transcription and synonyms/antonyms/examples, just a translation; maybe change the prompt in this case
 - Allow language selection
