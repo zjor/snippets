@@ -117,8 +117,8 @@ func Store(word string, from string, to string, translations []string) {
 	}
 }
 
-// List displays the last 15 translations in a formatted ASCII table
-func List() {
+// List displays the last n translations in a formatted ASCII table
+func List(limit int) {
 	csvPath, err := getCSVPath()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Could not get history path: %v\n", err)
@@ -147,13 +147,13 @@ func List() {
 		return
 	}
 
-	// Skip header and get last 15 records
+	// Skip header and get last n records
 	if len(records) <= 1 {
 		fmt.Println("No translation history found.")
 		return
 	}
 
-	start := len(records) - 15
+	start := len(records) - limit
 	if start < 1 {
 		start = 1 // Skip header
 	}

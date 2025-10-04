@@ -56,14 +56,20 @@ func main() {
 			&cli.BoolFlag{
 				Name:    "list",
 				Aliases: []string{"l"},
-				Usage:   "List last 15 translations from history",
+				Usage:   "List translations from history",
 				Value:   false,
+			},
+			&cli.IntFlag{
+				Name:    "number",
+				Aliases: []string{"n"},
+				Usage:   "Number of translations to list",
+				Value:   15,
 			},
 		},
 		Action: func(ctx *cli.Context) error {
 			// Handle list flag
 			if ctx.Bool("list") {
-				history.List()
+				history.List(ctx.Int("number"))
 				return nil
 			}
 
