@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -16,8 +17,8 @@ const (
 	historyFile = "words.csv"
 
 	// Table column width limits for readability
-	maxWordColumnWidth         = 25
-	maxTranslationsColumnWidth = 45
+	maxWordColumnWidth         = 35
+	maxTranslationsColumnWidth = 60
 )
 
 // truncateString properly truncates a string by Unicode characters, not bytes
@@ -157,6 +158,7 @@ func List() {
 		start = 1 // Skip header
 	}
 	lines := records[start:]
+	slices.Reverse(lines)
 
 	printTable(lines)
 }
@@ -164,20 +166,13 @@ func List() {
 // printTable formats and prints the translation history as an ASCII table
 func printTable(lines [][]string) {
 	// Calculate column widths using Unicode character count
-	timestampWidth := 19 // "2006-01-02 15:04:05"
-	fromWidth := 4
-	toWidth := 4
+	timestampWidth := 16 // "2006-01-02 15:04"
+	directionWidth := 9  // "en → ru"
 	wordWidth := 4
 	translationsWidth := 12
 
 	for _, line := range lines {
 		if len(line) >= 5 {
-			if getStringWidth(line[1]) > fromWidth {
-				fromWidth = getStringWidth(line[1])
-			}
-			if getStringWidth(line[2]) > toWidth {
-				toWidth = getStringWidth(line[2])
-			}
 			if getStringWidth(line[3]) > wordWidth {
 				wordWidth = getStringWidth(line[3])
 			}
@@ -196,24 +191,21 @@ func printTable(lines [][]string) {
 	}
 
 	// Print table header
-	fmt.Printf("┌─%s─┬─%s─┬─%s─┬─%s─┬─%s─┐\n",
+	fmt.Printf("┌─%s─┬─%s─┬─%s─┬─%s─┐\n",
 		strings.Repeat("─", timestampWidth),
-		strings.Repeat("─", fromWidth),
-		strings.Repeat("─", toWidth),
+		strings.Repeat("─", directionWidth),
 		strings.Repeat("─", wordWidth),
 		strings.Repeat("─", translationsWidth))
 
-	fmt.Printf("│ %-*s │ %-*s │ %-*s │ %-*s │ %-*s │\n",
+	fmt.Printf("│ %-*s │ %-*s │ %-*s │ %-*s │\n",
 		timestampWidth, "Timestamp",
-		fromWidth, "From",
-		toWidth, "To",
+		directionWidth, "Direction",
 		wordWidth, "Word",
 		translationsWidth, "Translations")
 
-	fmt.Printf("├─%s─┼─%s─┼─%s─┼─%s─┼─%s─┤\n",
+	fmt.Printf("├─%s─┼─%s─┼─%s─┼─%s─┤\n",
 		strings.Repeat("─", timestampWidth),
-		strings.Repeat("─", fromWidth),
-		strings.Repeat("─", toWidth),
+		strings.Repeat("─", directionWidth),
 		strings.Repeat("─", wordWidth),
 		strings.Repeat("─", translationsWidth))
 
@@ -227,20 +219,35 @@ func printTable(lines [][]string) {
 			wordPadding := wordWidth - getStringWidth(word)
 			translationsPadding := translationsWidth - getStringWidth(translations)
 
-			fmt.Printf("│ %-*s │ %-*s │ %-*s │ %s%s │ %s%s │\n",
-				timestampWidth, line[0],
-				fromWidth, line[1],
-				toWidth, line[2],
+			// Format timestamp without seconds
+			timestamp := line[0]
+			if t, err := time.Parse("2006-01-02 15:04:05", line[0]); err == nil {
+				timestamp = t.Format("2006-01-02 15:04")
+			}
+
+			// Format languages to lowercase 2-letter codes and create direction string
+			from := strings.ToLower(line[1])
+			if len(from) > 2 {
+				from = from[:2]
+			}
+			to := strings.ToLower(line[2])
+			if len(to) > 2 {
+				to = to[:2]
+			}
+			direction := fmt.Sprintf("%s → %s", from, to)
+
+			fmt.Printf("│ %-*s │ %-*s │ %s%s │ %s%s │\n",
+				timestampWidth, timestamp,
+				directionWidth, direction,
 				word, strings.Repeat(" ", wordPadding),
 				translations, strings.Repeat(" ", translationsPadding))
 		}
 	}
 
 	// Print table footer
-	fmt.Printf("└─%s─┴─%s─┴─%s─┴─%s─┴─%s─┘\n",
+	fmt.Printf("└─%s─┴─%s─┴─%s─┴─%s─┘\n",
 		strings.Repeat("─", timestampWidth),
-		strings.Repeat("─", fromWidth),
-		strings.Repeat("─", toWidth),
+		strings.Repeat("─", directionWidth),
 		strings.Repeat("─", wordWidth),
 		strings.Repeat("─", translationsWidth))
 

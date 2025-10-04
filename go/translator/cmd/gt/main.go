@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"royz.cc/translator/internal/config"
 	"strings"
 
 	"github.com/urfave/cli/v2"
 	"royz.cc/translator/internal/history"
 	"royz.cc/translator/internal/translator"
 )
-
-var EnvOpenaiApiKey = "OPENAI_API_KEY"
 
 func parseFromLanguage(from string) string {
 	switch from {
@@ -36,12 +35,9 @@ func parseFromLanguage(from string) string {
 
 func main() {
 	// Check if OpenAI API key is set before starting the application
-	_, ok := os.LookupEnv(EnvOpenaiApiKey)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "Error: %s environment variable is not set\n", EnvOpenaiApiKey)
-		fmt.Fprintf(os.Stderr, "Please set your OpenAI API key:\n")
-		fmt.Fprintf(os.Stderr, "  export %s=\"your-api-key-here\"\n", EnvOpenaiApiKey)
-		os.Exit(1)
+	_, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Configuration error: %v", err)
 	}
 
 	app := &cli.App{
