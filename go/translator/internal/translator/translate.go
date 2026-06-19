@@ -10,6 +10,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
+	"royz.cc/translator/internal/config"
 )
 
 const (
@@ -90,7 +92,15 @@ func NewTranslation(jsonData string) TranslationResponse {
 }
 
 // defaults to os.LookupEnv("OPENAI_API_KEY")
-var client = openai.NewClient()
+var client = newClient()
+
+func newClient() *openai.Client {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
+	return openai.NewClient(option.WithAPIKey(cfg.EnvOpenaiApiKey))
+}
 
 var TranslationResponseSchema = GenerateSchema[TranslationResponse]()
 

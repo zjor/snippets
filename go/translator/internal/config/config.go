@@ -1,8 +1,16 @@
 package config
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
+)
+
+const (
+	configDir  = ".gt"
+	configFile = ".env"
 )
 
 type Config struct {
@@ -10,8 +18,13 @@ type Config struct {
 }
 
 func LoadConfig() (*Config, error) {
+	fileVals, err := loadConfigFile()
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
-		EnvOpenaiApiKey: getEnv("OPENAI_API_KEY", ""),
+		EnvOpenaiApiKey: fileVals["OPENAI_API_KEY"],
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -21,16 +34,54 @@ func LoadConfig() (*Config, error) {
 	return cfg, nil
 }
 
-func getEnv(key, defaultValue string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
+// getConfigPath returns the full path to the config file in the working directory
+func getConfigPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("could not get home directory: %w", err)
 	}
-	return defaultValue
+	return filepath.Join(home, configDir, configFile), nil
+}
+
+// loadConfigFile parses KEY=VALUE lines from the working directory config file.
+// A missing file is not an error; it returns an empty map.
+func loadConfigFile() (map[string]string, error) {
+	path, err := getConfigPath()
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return map[string]string{}, nil
+		}
+		return nil, fmt.Errorf("could not open config file %s: %w", path, err)
+	}
+	defer file.Close()
+
+	vals := map[string]string{}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			continue
+		}
+		vals[strings.TrimSpace(key)] = strings.Trim(strings.TrimSpace(value), `"'`)
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("could not read config file %s: %w", path, err)
+	}
+	return vals, nil
 }
 
 func (c *Config) Validate() error {
 	if c.EnvOpenaiApiKey == "" {
-		return fmt.Errorf("OPENAI_API_KEY environment variable is not set")
+		return fmt.Errorf("OPENAI_API_KEY is not set (expected in ~/.gt/.env)")
 	}
 	return nil
 }
